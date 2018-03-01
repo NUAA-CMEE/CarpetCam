@@ -4,6 +4,8 @@ BezierOffset::BezierOffset()
 {
     splitNum = 10.0;
     delta = 1.00/splitNum;
+    num_points_judge = 10;
+    num_split_point = 10;
 
     //构造函数大框架
     int size1 = total_content.outlines4.size();  //颜色个数
@@ -65,18 +67,17 @@ BezierOffset::BezierOffset()
                 Bezier2Line  lines1 = close_curve.at(k); //一个Bezier曲线中的所有直线线段
                 Bezier2Line  lines2 = close_curve.at(k+1); //一个Bezier曲线中的所有直线线段  紧接着的后一条曲线
                 findIntersection(lines1,lines2);
-                total_content.outlines4.at(i).curves2[j][k] = lines1;
-                total_content.outlines4.at(i).curves2[j][k+1] = lines2;
+                total_content.outlines4[i].curves2[j][k] = lines1;
+                total_content.outlines4[i].curves2[j][k+1] = lines2;
             }
             //将最后一个直线组和第一个直线组
             Bezier2Line  lines1 = close_curve.at(size3-1);
             Bezier2Line  lines2 = close_curve.at(0);
             findIntersection(lines1,lines2);
-            total_content.outlines4.at(i).curves2[j][size3-1] = lines1;
-            total_content.outlines4.at(i).curves2[j][0] = lines2;
+            total_content.outlines4[i].curves2[j][size3-1] = lines1;
+            total_content.outlines4[i].curves2[j][0] = lines2;
         }
     }
-
 }
 
 /********************************************
@@ -354,7 +355,7 @@ float BezierOffset::BernsteinValue(int index, float i)
 }
 
 /********************************************
- *function:将Bezier曲线按弦长转化为直线段
+ *function:将Bezier曲线按弦长离散为直线段
  *input:
  *output:
  *adding:
@@ -363,7 +364,91 @@ float BezierOffset::BernsteinValue(int index, float i)
  *******************************************/
 Bezier2Line BezierOffset::convertBezier2Lines(bezier curve)
 {
+    int numOfLine = 0; //离散成的线段数目
+    float distance = bezierCurveLength(curve);
+    if(distance<=num_points_judge)
+    {
+        numOfLine = num_split_point;
+    }
+    else
+    {
+         numOfLine = int((distance/num_points_judge)*num_split_point);
+    }
 
+    Bezier2Line result;
+    result.isouter = curve.isouter;
+    Line_type temp;
+    float t = 0;
+    float delta= 1.00/numOfLine; //t的增量
+    for(int i = 0;i<numOfLine-1;i++)
+    {
+        t = i*delta;
+        float para0 = (1-t)*(1-t)*(1-t);
+        float para1 = 3*(1-t)*(1-t)*t;
+        float para2 = 3*(1-t)*t*t;
+        float para3 = t*t*t;
+        temp.start.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+        temp.start.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+        t = t +delta;
+        para0 = (1-t)*(1-t)*(1-t);
+        para1 = 3*(1-t)*(1-t)*t;
+        para2 = 3*(1-t)*t*t;
+        para3 = t*t*t;
+        temp.end.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+        temp.end.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+        result.lines.append(temp);
+    }
+    //最后一段加上
+    t = delta*(numOfLine-1);
+    float para0 = (1-t)*(1-t)*(1-t);
+    float para1 = 3*(1-t)*(1-t)*t;
+    float para2 = 3*(1-t)*t*t;
+    float para3 = t*t*t;
+    temp.start.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+    temp.start.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+    temp.end.x = curve.point4.x();
+    temp.end.y = curve.point4.y();
+    result.lines.append(temp);
+
+    return result;
+}
+
+/********************************************
+ *function:离散Bezier曲线来近似计算出曲线的弧长
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/3/1
+ *******************************************/
+float BezierOffset::bezierCurveLength(bezier curve)
+{
+    float total_distance = 0;
+    for(float t = 0;t<=0.9;t = t+0.1)
+    {
+        float_Point  point1;
+        float para0 = (1-t)*(1-t)*(1-t);
+        float para1 = 3*(1-t)*(1-t)*t;
+        float para2 = 3*(1-t)*t*t;
+        float para3 = t*t*t;
+        point1.x = para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+        point1.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+
+        float_Point  point2; //后一个点
+        float m = t+0.1;
+        para0 = (1-m)*(1-m)*(1-m);
+        para1 = 3*(1-m)*(1-m)*m;
+        para2 = 3*(1-m)*m*m;
+        para3 = m*m*m;
+        point2.x = para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+        point2.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+
+        float delta_x = point1.x - point2.x;
+        float delta_y = point1.y - point2.y;
+        float distance = sqrt(delta_x*delta_x + delta_y*delta_y);
+        total_distance = total_distance + distance;
+    }
+    return total_distance;
 }
 
 /********************************************
@@ -376,7 +461,59 @@ Bezier2Line BezierOffset::convertBezier2Lines(bezier curve)
  *******************************************/
 void BezierOffset::findIntersection(Bezier2Line &line1, Bezier2Line &line2)
 {
+    int size1 = line1.lines.size();
+    int size2 = line2.lines.size();
+    for(int m2 = 0;m2<size2;m2++)
+    {
+        for(int m1 = size1-1;m1>=0;m--)
+        {
 
+        }
+    }
+}
+
+/********************************************
+ *function:求两条直线的角点
+ *input:
+ *output:
+ *adding:  1.如果有交点，求出交点并返回
+ *             2.如果没有交点，将返回点的坐标设置为特殊值
+ *author: wong
+ *date: 2018/3/1
+ *******************************************/
+Point BezierOffset::twoLineCross(Line_type line1, Line_type line2)
+{
+    float x1,x2,x3,x4;
+    float y1,y2,y3,y4;
+    x1 = line1.start.x;
+    x2 = line1.end.x;
+    x3 = line2.start.x;
+    x4 = line2.end.x;
+
+    y1 = line1.start.y;
+    y2 = line1.end.y;
+    y3 = line2.start.y;
+    y4 = line2.end.y;
+
+    float num= (y3-y4)*(x2-x1) - (x3-x1)*(y2-y1);  //分子
+    float den = (x4-x3)*(y2-y1) - (y4-y3)*(x2-x1);  //分母
+
+    if(den == 0)  //无解
+    {
+
+    }
+    else  //得到第二条直线的参数t2，求出交点
+    {
+        float t2 = num/den;
+        if(t2>=0&&t2<=1)
+        {
+
+        }
+        else  //不在参数范围0-1内，无交点
+        {
+
+        }
+    }
 }
 
 
