@@ -465,9 +465,17 @@ void BezierOffset::findIntersection(Bezier2Line &line1, Bezier2Line &line2)
     int size2 = line2.lines.size();
     for(int m2 = 0;m2<size2;m2++)
     {
-        for(int m1 = size1-1;m1>=0;m--)
+        for(int m1 = size1-1;m1>=0;m1--)
         {
-
+            float_Point  cross = twoLineCross(line1.lines.at(m1),line1.lines.at(m2));
+            if(cross.x ==-999&&cross.y == -999) //没有交点
+            {
+                
+            }
+            else  //根据m1和m2来截取直线
+            {
+                
+            }
         }
     }
 }
@@ -477,12 +485,13 @@ void BezierOffset::findIntersection(Bezier2Line &line1, Bezier2Line &line2)
  *input:
  *output:
  *adding:  1.如果有交点，求出交点并返回
- *             2.如果没有交点，将返回点的坐标设置为特殊值
+ *             2.如果没有交点，将返回点的坐标设置为特殊值(暂时定为(-999，-999)
  *author: wong
  *date: 2018/3/1
  *******************************************/
-Point BezierOffset::twoLineCross(Line_type line1, Line_type line2)
+float_Point BezierOffset::twoLineCross(Line_type line1, Line_type line2)
 {
+    float_Point result;
     float x1,x2,x3,x4;
     float y1,y2,y3,y4;
     x1 = line1.start.x;
@@ -500,18 +509,24 @@ Point BezierOffset::twoLineCross(Line_type line1, Line_type line2)
 
     if(den == 0)  //无解
     {
-
+        result.x = -999;
+        result.y = -999;
+        return result;
     }
     else  //得到第二条直线的参数t2，求出交点
     {
         float t2 = num/den;
         if(t2>=0&&t2<=1)
         {
-
+            result.x = (1-t2)*line2.start.x+t2*line2.end.x;
+            result.y = (1-t2)*line2.start.y+t2*line2.end.y;
+            return result;
         }
         else  //不在参数范围0-1内，无交点
         {
-
+            result.x = -999;
+            result.y = -999;
+            return result;
         }
     }
 }

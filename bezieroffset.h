@@ -27,7 +27,7 @@ private:
     Bezier2Line  convertBezier2Lines(bezier curve);
     float  bezierCurveLength(bezier curve);
     void findIntersection(Bezier2Line &line1,Bezier2Line &line2);
-    Point twoLineCross(Line_type line1,Line_type line2);
+    float_Point twoLineCross(Line_type line1,Line_type line2);
 };
 
 #endif // BEZIEROFFSET_H

@@ -4,7 +4,7 @@
 
 enum  fitType{LineType,SplineType};   //曲线拟合类型: 直线和三次B样条
 
-typedef struct Point
+typedef struct Point_mine
 {
     float x;
     float y;
@@ -18,16 +18,16 @@ public:
 
 class LineEntity : public baseEntity
 {
-    Point  start;
-    Point  end;
+    Point_mine  start;
+    Point_mine  end;
 };
 
 class SplineEntity : public baseEntity
 {
-    Point pot1;
-    Point pot2;
-    Point pot3;
-    Point pot4;
+    Point_mine pot1;
+    Point_mine pot2;
+    Point_mine pot3;
+    Point_mine pot4;
 };
 
 #endif // ENTITYTYPE_H

@@ -159,10 +159,16 @@ typedef struct bezier_type
     bool isouter;  //true:外环   false:内环
 }bezier;
 
+struct float_Point
+{
+    float x;
+    float y;
+};
+
 struct Line_type
 {
-    Point start;
-    Point end;
+    float_Point start;
+    float_Point end;
 };
 
 struct Bezier2Line   //Bezier曲线离散成直线
@@ -207,11 +213,7 @@ struct tangent_vector
     float  tangent_y; //单位切向量的y坐标
 };
 
-struct float_Point
-{
-    float x;
-    float y;
-};
+
 
 
 
