@@ -15,6 +15,7 @@ private:
     float num_points_judge; //决定Bezier曲线离散成线段的阈值，小于阈值时为一固定值，超过阈值时数目和曲线弧长成正比
     int  num_split_point;  // 小于阈值时离散的线段数目
 
+
 private:
     bezier offsetCurves(bezier input,bool direction);
     tangent_vector computeTangent(float t,bezier curve);
@@ -27,6 +28,7 @@ private:
     Bezier2Line  convertBezier2Lines(bezier curve);
     float  bezierCurveLength(bezier curve);
     void findIntersection(Bezier2Line &line1,Bezier2Line &line2);
+    void connectLines(Bezier2Line &line1,Bezier2Line &line2);
     float_Point twoLineCross(Line_type line1,Line_type line2);
 };
 

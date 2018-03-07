@@ -229,7 +229,7 @@ void MainWindow::on_quantification_btn_4_clicked()
 void MainWindow::on_quantification_btn_5_clicked()
 {
     spline = new curveFit;
-//    offset = new BezierOffset;
+    offset = new BezierOffset;
     showPic  test;
     test.exec();
 }

@@ -15,7 +15,7 @@ bool quantity_first = false;//true第一种量化方法    false第二种量化�
 float NBS_yuzhi = 3.2; //NBS阈值  2.7 k mean   density peak3
 int kernel_size = 3;
 int total_pic_number = 1; //聚类图像分解后的数量
-float offset_distance = 4; //轮廓偏置距离
+float offset_distance = 1; //轮廓偏置距离
 
 Cluster_point *cluster_Head = NULL;//聚类中心链表头
 Pictures allPic;

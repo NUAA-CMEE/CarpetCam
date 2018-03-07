@@ -26,7 +26,7 @@ BezierOffset::BezierOffset()
         }
     }
 
-    /*将所有Bezier曲线沿法线方向平移一定距离后，偏置曲线存在交叉现象，
+    /*将所有Bezier曲线沿法线方向平移一定距离后，偏置曲线存在交叉或散开现象，
        将Bezier曲线按弦长离散成直线来求交，求得封闭且连续的多边形*/
 
     //先按弦长将Bezier曲线离散成直线
@@ -53,7 +53,7 @@ BezierOffset::BezierOffset()
         total_content.outlines4[i].curves2.append(color);
     }
 
-    //多边形求交，使成为封闭连续多边形
+    //多边形求交    有问题
     for(int i = 0;i<size1;i++)
     {
         color_Splines2  color_bezier = total_content.outlines4.at(i);
@@ -78,6 +78,33 @@ BezierOffset::BezierOffset()
             total_content.outlines4[i].curves2[j][0] = lines2;
         }
     }
+
+    //将偏移后断开的线段连接起来
+//    for(int i = 0;i<size1;i++)
+//    {
+//        color_Splines2  color_bezier = total_content.outlines4.at(i);
+//        int size2 = color_bezier.curves.size();  //同一个颜色的封闭环个数
+//        for(int j = 0;j<size2;j++)
+//        {
+//            QVector<Bezier2Line> close_curve = color_bezier.curves2.at(j); //封闭环
+//            int size3 = close_curve.size(); //组成封闭环的曲线的段数
+//            for(int k = 0;k<size3 - 1;k++) //前一个直线组和后一个直线组求交
+//            {
+//                Bezier2Line  lines1 = close_curve.at(k); //一个Bezier曲线中的所有直线线段
+//                Bezier2Line  lines2 = close_curve.at(k+1); //一个Bezier曲线中的所有直线线段  紧接着的后一条曲线
+//                connectLines(lines1,lines2);
+//                total_content.outlines4[i].curves2[j][k] = lines1;
+//                total_content.outlines4[i].curves2[j][k+1] = lines2;
+//            }
+//            //将最后一个直线组和第一个直线组
+//            Bezier2Line  lines1 = close_curve.at(size3-1);
+//            Bezier2Line  lines2 = close_curve.at(0);
+//            connectLines(lines1,lines2);
+//            total_content.outlines4[i].curves2[j][size3-1] = lines1;
+//            total_content.outlines4[i].curves2[j][0] = lines2;
+//        }
+//    }
+
 }
 
 /********************************************
@@ -209,8 +236,8 @@ float_Point BezierOffset::computeOffsetPoint(tangent_vector input, bool directio
     }
 
     float_Point result;
-    result.x = input.start_x + offset.x;
-    result.y = input.start_y + offset.y;
+    result.x = input.start_x + offset.x*offset_distance;
+    result.y = input.start_y + offset.y*offset_distance;
     return result;
 }
 
@@ -388,7 +415,7 @@ Bezier2Line BezierOffset::convertBezier2Lines(bezier curve)
         float para2 = 3*(1-t)*t*t;
         float para3 = t*t*t;
         temp.start.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
-        temp.start.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+        temp.start.y= para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
         t = t +delta;
         para0 = (1-t)*(1-t)*(1-t);
         para1 = 3*(1-t)*(1-t)*t;
@@ -467,17 +494,46 @@ void BezierOffset::findIntersection(Bezier2Line &line1, Bezier2Line &line2)
     {
         for(int m1 = size1-1;m1>=0;m1--)
         {
-            float_Point  cross = twoLineCross(line1.lines.at(m1),line1.lines.at(m2));
+            float_Point  cross = twoLineCross(line1.lines.at(m1),line2.lines.at(m2));
             if(cross.x ==-999&&cross.y == -999) //没有交点
             {
                 
             }
             else  //根据m1和m2来截取直线
             {
-                
+                //line1去掉尾巴,并修改最后一条直线
+                for(int i = size1-1;i>m1;i--)
+                {
+                    line1.lines.removeLast();
+                }
+                int after_num1 = line1.lines.size();
+                line1.lines[after_num1-1].end.x = cross.x;
+                line1.lines[after_num1-1].end.y = cross.y;
+
+                //line2去掉头，并修改开始处的直线
+                for(int j = 0;j<m2;j++)
+                {
+                    line2.lines.removeFirst();
+                }
+                line2.lines[0].start.x = cross.x;
+                line2.lines[0].start.y = cross.y;
+                return;
             }
         }
     }
+}
+
+/********************************************
+ *function:将偏移后断开的直线连接起来，使成为连续的封闭环
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/3/7
+ *******************************************/
+void BezierOffset::connectLines(Bezier2Line &line1, Bezier2Line &line2)
+{
+
 }
 
 /********************************************

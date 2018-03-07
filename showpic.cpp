@@ -178,7 +178,7 @@ void showPic::drawOutline3()
 void showPic::drawOutline_Bezier()
 {
     int size1 = total_content.outlines4.size();  //颜色个数
-    for(int i = 0;i<size1;i++)
+    for(int i = 0;i<size1;i++) //size1
     {
         color_Splines2  color_bezier = total_content.outlines4.at(i);
         //设置画笔的颜色
@@ -197,7 +197,7 @@ void showPic::drawOutline_Bezier()
             {
                 bezier  draw_bezier = close_curve.at(k);
                 QPointF point1,point2,point3,point4;
-                float m = 1;  //放大倍数
+                float m = 2;  //放大倍数
                 point1.setX(draw_bezier.point1.y()*m);point1.setY(draw_bezier.point1.x()*m);
                 point2.setX(draw_bezier.point2.y()*m);point2.setY(draw_bezier.point2.x()*m);
                 point3.setX(draw_bezier.point3.y()*m);point3.setY(draw_bezier.point3.x()*m);
@@ -208,6 +208,50 @@ void showPic::drawOutline_Bezier()
             }
         }
 
+    }
+}
+
+/********************************************
+ *function:绘制离散成直线的Bezier曲线
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/3/3
+ *******************************************/
+void showPic::drawOutline_Bezier2Line()
+{
+    int size1 = total_content.outlines4.size();  //颜色个数
+    for(int i = 0;i<size1;i++)
+    {
+        color_Splines2  color_bezier = total_content.outlines4.at(i);
+        //设置画笔的颜色
+        QPen pen;
+        QColor  rgb(color_bezier.R,color_bezier.G,color_bezier.B);
+        pen .setColor(rgb);
+        pen.setWidth(1);
+        pen1->setPen(pen);
+
+        int size2 = color_bezier.curves2.size();  //同一个颜色的封闭环个数
+        for(int j = 0;j<size2;j++)
+        {
+            QVector<Bezier2Line> close_curve = color_bezier.curves2.at(j); //封闭环
+            int size3 = close_curve.size(); //组成封闭环的曲线的段数
+            for(int k = 0;k<size3;k++)
+            {
+                Bezier2Line  draw_line = close_curve.at(k);
+                int size4 = draw_line.lines.size();
+                for(int L = 0;L<size4;L++)
+                {
+                    Line_type line = draw_line.lines.at(L);
+                    QPointF start,end;  //直线起点和终点
+                    float m = 2;  //放大倍数
+                    start.setX(line.start.y*m);start.setY(line.start.x*m);
+                    end.setX(line.end.y*m);end.setY(line.end.x*m);
+                    pen1->drawLine(start,end);
+                }
+            }
+        }
     }
 }
 
@@ -338,7 +382,9 @@ void showPic::paintEvent(QPaintEvent *)
 //    drawOutline();
 //    drawOutline2();
 //    drawOutline3();
-    drawOutline_Bezier();
+
+//    drawOutline_Bezier();
+    drawOutline_Bezier2Line();
     QPainter pen2(this);
     pen2.scale(1.7,1.7);
     pen2.drawPixmap(0,0,*pix);  //把画布上的东西画出来
