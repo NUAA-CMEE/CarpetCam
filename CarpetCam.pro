@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     tracker.cpp \
     curvefit.cpp \
     showpic.cpp \
-    bezieroffset.cpp
+    bezieroffset.cpp \
+    fillcolors.cpp
 
 HEADERS  += mainwindow.h \
     globalvariable.h \
@@ -33,7 +34,8 @@ HEADERS  += mainwindow.h \
     curvefit.h \
     showpic.h \
     entitytype.h \
-    bezieroffset.h
+    bezieroffset.h \
+    fillcolors.h
 
 FORMS    += mainwindow.ui \
     showpic.ui

@@ -31,6 +31,9 @@ extern Pictures allPic;  //存储所有的图片的链表(像素坐标)
 extern all_Splines total_content;  //存储外轮廓和水平填充点集
 extern int total_pic_number; //聚类图像分解后的数量   颜色种类数
 
+extern float  Stitch;//针距（扫描线间距）
+extern float  offsetRange;//偏移距离 （距离实际轮廓边界距离）
+
 QImage Mat2QImage(cv::Mat cvImg);
 
 #endif // GLOBALVARIABLE_H

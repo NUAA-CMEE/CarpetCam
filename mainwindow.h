@@ -11,6 +11,7 @@
 #include<tracker.h>
 #include<curvefit.h>
 #include<bezieroffset.h>
+#include<fillcolors.h>
 
 
 namespace Ui {
@@ -38,6 +39,8 @@ private slots:
 
     void on_quantification_btn_5_clicked();
 
+    void on_quantification_btn_6_clicked();
+
 private:
     Ui::MainWindow *ui;
     Quantification *quanti;
@@ -46,6 +49,7 @@ private:
     Tracker *track;
     curveFit *spline;
     BezierOffset *offset;
+    fillColors *fills;
 };
 
 #endif // MAINWINDOW_H

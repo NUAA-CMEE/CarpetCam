@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     split = NULL;
     track = NULL;
     spline = NULL;
+    fills = NULL;
 
 }
 
@@ -229,7 +230,20 @@ void MainWindow::on_quantification_btn_4_clicked()
 void MainWindow::on_quantification_btn_5_clicked()
 {
     spline = new curveFit;
-    offset = new BezierOffset;
+//    offset = new BezierOffset;
     showPic  test;
     test.exec();
+}
+
+/********************************************
+ *function:
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/3/14
+ *******************************************/
+void MainWindow::on_quantification_btn_6_clicked()
+{
+    fills = new fillColors;
 }

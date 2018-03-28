@@ -2,7 +2,7 @@
 
 BezierOffset::BezierOffset()
 {
-    splitNum = 10.0;
+    splitNum = 60.0;
     delta = 1.00/splitNum;
     num_points_judge = 10;
     num_split_point = 10;
@@ -80,30 +80,30 @@ BezierOffset::BezierOffset()
     }
 
     //将偏移后断开的线段连接起来
-//    for(int i = 0;i<size1;i++)
-//    {
-//        color_Splines2  color_bezier = total_content.outlines4.at(i);
-//        int size2 = color_bezier.curves.size();  //同一个颜色的封闭环个数
-//        for(int j = 0;j<size2;j++)
-//        {
-//            QVector<Bezier2Line> close_curve = color_bezier.curves2.at(j); //封闭环
-//            int size3 = close_curve.size(); //组成封闭环的曲线的段数
-//            for(int k = 0;k<size3 - 1;k++) //前一个直线组和后一个直线组求交
-//            {
-//                Bezier2Line  lines1 = close_curve.at(k); //一个Bezier曲线中的所有直线线段
-//                Bezier2Line  lines2 = close_curve.at(k+1); //一个Bezier曲线中的所有直线线段  紧接着的后一条曲线
-//                connectLines(lines1,lines2);
-//                total_content.outlines4[i].curves2[j][k] = lines1;
-//                total_content.outlines4[i].curves2[j][k+1] = lines2;
-//            }
-//            //将最后一个直线组和第一个直线组
-//            Bezier2Line  lines1 = close_curve.at(size3-1);
-//            Bezier2Line  lines2 = close_curve.at(0);
-//            connectLines(lines1,lines2);
-//            total_content.outlines4[i].curves2[j][size3-1] = lines1;
-//            total_content.outlines4[i].curves2[j][0] = lines2;
-//        }
-//    }
+    for(int i = 0;i<size1;i++)
+    {
+        color_Splines2  color_bezier = total_content.outlines4.at(i);
+        int size2 = color_bezier.curves.size();  //同一个颜色的封闭环个数
+        for(int j = 0;j<size2;j++)
+        {
+            QVector<Bezier2Line> close_curve = color_bezier.curves2.at(j); //封闭环
+            int size3 = close_curve.size(); //组成封闭环的曲线的段数
+            for(int k = 0;k<size3 - 1;k++) //前一个直线组和后一个直线组求交
+            {
+                Bezier2Line  lines1 = close_curve.at(k); //一个Bezier曲线中的所有直线线段
+                Bezier2Line  lines2 = close_curve.at(k+1); //一个Bezier曲线中的所有直线线段  紧接着的后一条曲线
+                connectLines(lines1,lines2);
+                total_content.outlines4[i].curves2[j][k] = lines1;
+                total_content.outlines4[i].curves2[j][k+1] = lines2;
+            }
+            //将最后一个直线组和第一个直线组
+            Bezier2Line  lines1 = close_curve.at(size3-1);
+            Bezier2Line  lines2 = close_curve.at(0);
+            connectLines(lines1,lines2);
+            total_content.outlines4[i].curves2[j][size3-1] = lines1;
+            total_content.outlines4[i].curves2[j][0] = lines2;
+        }
+    }
 
 }
 
@@ -527,13 +527,27 @@ void BezierOffset::findIntersection(Bezier2Line &line1, Bezier2Line &line2)
  *function:将偏移后断开的直线连接起来，使成为连续的封闭环
  *input:
  *output:
- *adding:
+ *adding:先判断前一条直线的终点和第二条直线的起点是否重合，如果重合不做改变。
+ *           如果不重合需要将第一条直线的最后加一条直线，连接到第二条直线上去
  *author: wong
  *date: 2018/3/7
  *******************************************/
 void BezierOffset::connectLines(Bezier2Line &line1, Bezier2Line &line2)
 {
-
+    float_Point  line1_end,line2_start;
+    line1_end = line1.lines.last().end;
+    line2_start = line2.lines.first().start;
+    if(line1_end.x ==line2_start.x&&line1_end.y==line2_start.x)
+    {
+        return;
+    }
+    else
+    {
+        Line_type add;
+        add.start = line1_end;
+        add.end = line2_start;
+        line1.lines.append(add);
+    }
 }
 
 /********************************************

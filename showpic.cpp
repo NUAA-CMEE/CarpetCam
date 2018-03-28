@@ -245,7 +245,7 @@ void showPic::drawOutline_Bezier2Line()
                 {
                     Line_type line = draw_line.lines.at(L);
                     QPointF start,end;  //直线起点和终点
-                    float m = 2;  //放大倍数
+                    float m = 1;  //放大倍数
                     start.setX(line.start.y*m);start.setY(line.start.x*m);
                     end.setX(line.end.y*m);end.setY(line.end.x*m);
                     pen1->drawLine(start,end);

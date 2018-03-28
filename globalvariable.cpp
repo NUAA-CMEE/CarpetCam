@@ -17,6 +17,9 @@ int kernel_size = 3;
 int total_pic_number = 1; //聚类图像分解后的数量
 float offset_distance = 1; //轮廓偏置距离
 
+float  Stitch = 5;
+float  offsetRange = 2;
+
 Cluster_point *cluster_Head = NULL;//聚类中心链表头
 Pictures allPic;
 all_Splines total_content;
