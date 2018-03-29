@@ -34,6 +34,7 @@ private:
     void drawOutline3();
     void drawOutline_Bezier();
     void drawOutline_Bezier2Line();
+    void drawFillLines();
     void outAndFill();
     void spline2Bezier();
     QVector<bezier> translateCtrPoint(Spline_Node input);

@@ -1007,7 +1007,7 @@ point_Node *fillColors::FirstChainNode(MonotonicChain chain, activeEdgeTable_Nod
             {
                 float_Point  cross;
                 cross.x = (1-t)*line.start.x + t*line.end.x;
-                cross.y = (1-t)*line.at(i).start.x + t*line.end.x;
+                cross.y = (1-t)*line.start.x + t*line.end.x;
 
                 point_Node* Node = cur_Edge->pHead;
                 while(Node)
@@ -1128,7 +1128,7 @@ point_Node *fillColors::buildYRelation(MonotonicChain chain, activeEdgeTable_Nod
             {
                 float_Point  cross;
                 cross.x = (1-t)*line.start.x + t*line.end.x;
-                cross.y = (1-t)*line.at(i).start.x + t*line.end.x;
+                cross.y = (1-t)*line.start.x + t*line.end.x;
 
                 point_Node*  target_Node = NULL;
                 point_Node* Node = cur_Edge->pHead;
@@ -1266,7 +1266,7 @@ bool fillColors::isAllWorked(activeEdgeTable_Node *AET_Head)
 point_Node *fillColors::findGoodPoint(activeEdgeTable_Node *AET_Head)
 {
     point_Node *result = NULL;
-    activeEdgeTable_Node * temp = AET_Head->pHead;  //要想取到最上最左的起始节点，必须借助有向的扫描线链表
+    activeEdgeTable_Node * temp = AET_Head;  //要想取到最上最左的起始节点，必须借助有向的扫描线链表
     while (temp)
     {
         if(temp->pHead->process== false)//当前扫描线的起始节点尚未加工

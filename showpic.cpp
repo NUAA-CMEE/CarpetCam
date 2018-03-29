@@ -256,6 +256,56 @@ void showPic::drawOutline_Bezier2Line()
 }
 
 /********************************************
+ *function:将各个颜色的内部填充线绘制出来
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/3/25
+ *******************************************/
+void showPic::drawFillLines()
+{
+    int size1 = final_fill.size();  //颜色个数
+    for(int i = 0;i<size1;i++)
+    {
+        color_linesFillColor  fill_color = final_fill.at(i);
+        //设置画笔的颜色
+        QPen pen;
+        QColor  rgb(fill_color.R,fill_color.G,fill_color.B);
+        pen .setColor(rgb);
+        pen.setWidth(1);
+        pen1->setPen(pen);
+
+        int size2 = fill_color.size();  //同一个颜色的加工区域个数
+        for(int j = 0;j<size2;j++)
+        {
+            processAreaFill a_processArea = fill_color.at(j); //封闭环
+            int size3 = a_processArea.points.size(); //当前加工区域的连续水平填充线的段数
+            for(int k = 0;k<size3;k++)
+            {
+                QVector<float_Point>  points = a_processArea.points.at(k);
+                int size4 = points.size();
+                if(size4<2)
+                    qDebug()<<tr("填充点数过少");
+                else
+                {
+                    for(int L = 1;L<size4;L++)
+                    {
+                        float_Point start = points.at(L-1);
+                        float_Point end = points.at(L);
+                        QPointF start2,end2;  //直线起点和终点
+                        float m = 1;  //放大倍数
+                        start2.setX(start.y*m);start2.setY(start.x*m);
+                        end2.setX(end.y*m);end2.setY(end.x*m);
+                        pen1->drawLine(start2,end2);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/********************************************
  *function:按颜色来画出外轮廓和填充，仿真地毯的织造过程
  *input:
  *output:

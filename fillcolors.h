@@ -15,7 +15,6 @@ private:
     float num_points_judge; //决定Bezier曲线离散成线段的阈值，小于阈值时为一固定值，超过阈值时数目和曲线弧长成正比
     int  num_split_point;  // 小于阈值时离散的线段数目
     QVector<QVector<processArea>>  all_colorWorkArea; //所有颜色的加工区域
-    QVector<color_linesFillColor>  final_fill; //所有颜色的填充结果
 
 private:
     //预处理函数

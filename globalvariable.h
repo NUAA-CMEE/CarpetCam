@@ -34,6 +34,8 @@ extern int total_pic_number; //聚类图像分解后的数量   颜色种类数
 extern float  Stitch;//针距（扫描线间距）
 extern float  offsetRange;//偏移距离 （距离实际轮廓边界距离）
 
+extern QVector<color_linesFillColor>  final_fill; //所有颜色的填充结果
+
 QImage Mat2QImage(cv::Mat cvImg);
 
 #endif // GLOBALVARIABLE_H
