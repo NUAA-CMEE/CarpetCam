@@ -246,8 +246,8 @@ struct  point_Node   //点（节点）
     point_Node *Next_Node;//同一行扫描线上的下一个节点
     point_Node *linked; //同一扫描行上可以相连的节点
     point_Node *disconnect;//同一扫描行上不可以相连的节点
-    point_Node *chainBefore;//单调链上的前一个节点
-    point_Node *chainNext;//单调链上的下一个节点
+    point_Node *chainBefore;//单调链上的前一个节点   X小的
+    point_Node *chainNext;//单调链上的下一个节点      X大的
     point_Node *chainPcritical;//单调链上的转接节点
     point_Node *pNext;//实际走刀时的下一点
 };

@@ -34,6 +34,7 @@ private:
     void drawOutline3();
     void drawOutline_Bezier();
     void drawOutline_Bezier2Line();
+    void drawSplitBezier();
     void drawFillLines();
     void outAndFill();
     void spline2Bezier();

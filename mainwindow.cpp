@@ -231,8 +231,6 @@ void MainWindow::on_quantification_btn_5_clicked()
 {
     spline = new curveFit;
 //    offset = new BezierOffset;
-    showPic  test;
-    test.exec();
 }
 
 /********************************************
@@ -246,4 +244,6 @@ void MainWindow::on_quantification_btn_5_clicked()
 void MainWindow::on_quantification_btn_6_clicked()
 {
     fills = new fillColors;
+    showPic  test;
+    test.exec();
 }

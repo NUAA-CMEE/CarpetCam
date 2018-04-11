@@ -197,7 +197,7 @@ void showPic::drawOutline_Bezier()
             {
                 bezier  draw_bezier = close_curve.at(k);
                 QPointF point1,point2,point3,point4;
-                float m = 2;  //放大倍数
+                float m = 1;  //放大倍数
                 point1.setX(draw_bezier.point1.y()*m);point1.setY(draw_bezier.point1.x()*m);
                 point2.setX(draw_bezier.point2.y()*m);point2.setY(draw_bezier.point2.x()*m);
                 point3.setX(draw_bezier.point3.y()*m);point3.setY(draw_bezier.point3.x()*m);
@@ -256,6 +256,61 @@ void showPic::drawOutline_Bezier2Line()
 }
 
 /********************************************
+ *function:将Bezier曲线离散化后的直线绘制出来，验证离散的正确性
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/3/25
+ *******************************************/
+void showPic::drawSplitBezier()
+{
+    int size = all_color.size();
+    for(int i = 0;i<size;i++)
+    {
+        color_loops loops = all_color.at(i);
+        //设置画笔的颜色
+        QPen pen;
+        QColor  rgb(loops.R,loops.G,loops.B);
+        pen .setColor(rgb);
+        pen.setWidth(1);
+        pen1->setPen(pen);
+
+        int size1 = loops.inners.size(); //内环有若干个环
+        for(int j = 0;j<size1;j++)
+        {
+            loop a_loop = loops.inners.at(j);
+            int size2 = a_loop.lines.size(); //当前环含有的直线段数
+            for(int k = 0;k<size2;k++)
+            {
+                Line_type2 line = a_loop.lines.at(k);
+                QPointF start,end;  //直线起点和终点
+                float m = 1;  //放大倍数
+                start.setX(line.start.y*m);start.setY(line.start.x*m);
+                end.setX(line.end.y*m);end.setY(line.end.x*m);
+                pen1->drawLine(start,end);
+            }
+        }
+
+        size1 = loops.outers.size(); //该颜色所有的外环
+        for(int j = 0;j<size1;j++)
+        {
+            loop a_loop = loops.outers.at(j);
+            int size2 = a_loop.lines.size(); //当前环含有的直线段数
+            for(int k = 0;k<size2;k++)
+            {
+                Line_type2 line = a_loop.lines.at(k);
+                QPointF start,end;  //直线起点和终点
+                float m = 1;  //放大倍数
+                start.setX(line.start.y*m);start.setY(line.start.x*m);
+                end.setX(line.end.y*m);end.setY(line.end.x*m);
+                pen1->drawLine(start,end);
+            }
+        }
+    }
+}
+
+/********************************************
  *function:将各个颜色的内部填充线绘制出来
  *input:
  *output:
@@ -276,10 +331,10 @@ void showPic::drawFillLines()
         pen.setWidth(1);
         pen1->setPen(pen);
 
-        int size2 = fill_color.size();  //同一个颜色的加工区域个数
+        int size2 = fill_color.areas.size();  //同一个颜色的加工区域个数
         for(int j = 0;j<size2;j++)
         {
-            processAreaFill a_processArea = fill_color.at(j); //封闭环
+            processAreaFill a_processArea = fill_color.areas.at(j); //封闭环
             int size3 = a_processArea.points.size(); //当前加工区域的连续水平填充线的段数
             for(int k = 0;k<size3;k++)
             {
@@ -434,7 +489,9 @@ void showPic::paintEvent(QPaintEvent *)
 //    drawOutline3();
 
 //    drawOutline_Bezier();
-    drawOutline_Bezier2Line();
+//    drawOutline_Bezier2Line();
+//    drawSplitBezier();
+    drawFillLines();
     QPainter pen2(this);
     pen2.scale(1.7,1.7);
     pen2.drawPixmap(0,0,*pix);  //把画布上的东西画出来

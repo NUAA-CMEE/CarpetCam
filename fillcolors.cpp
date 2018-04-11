@@ -4,11 +4,13 @@
 
 fillColors::fillColors()
 {
-    num_points_judge = 10;
-    num_split_point = 10;
+    num_points_judge = 80;
+    num_split_point = 4;
+    chain_judge = 5;
+    filter_distance = 10;
     splitBezierCurve();
     sortLoopArea();
-    findWorkArea();
+    findWorkArea(); //find all process area
 
     planAreaFill();  //填充所有的颜色区域
 }
@@ -145,59 +147,110 @@ void fillColors::addLines(loop &input1, QVector<Line_type2> input2)
  *input:
  *output:
  *adding:
+ *           离散时，数目过多会导致线段太短；数目过少会导致精度缺失
+ *           需要考虑到部分Bezier曲线为直线的特殊情况，就不需要离散，直接用Line_type2来表示
  *author: wong
  *date: 2018/3/14
  *******************************************/
 QVector<Line_type2> fillColors::convertBezier2Lines(bezier curve)
 {
-    int numOfLine = 0; //离散成的线段数目
-    float distance = bezierCurveLength(curve);
-    if(distance<=num_points_judge)
+    if(bezierIsLine(curve))  // Bezier曲线表示的是直线
     {
-        numOfLine = num_split_point;
+        QVector<Line_type2> result;
+        Line_type2 line;
+        line.start.x = curve.point1.x();
+        line.start.y = curve.point1.y();
+        line.end.x = curve.point4.x();
+        line.end.y = curve.point4.y();
+        result.append(line);
+        return result;
     }
     else
     {
-         numOfLine = int((distance/num_points_judge)*num_split_point);
-    }
+        int numOfLine = 0; //离散成的线段数目
+        float distance = bezierCurveLength(curve);
+        if(distance<=num_points_judge)
+        {
+            numOfLine = num_split_point;
+        }
+        else
+        {
+             numOfLine = int((distance/num_points_judge)*num_split_point*1.0);
+        }
 
-    QVector<Line_type2> result;
-    Line_type2 temp;
-    float t = 0;
-    float delta= 1.00/numOfLine; //t的增量
-    for(int i = 0;i<numOfLine-1;i++)
-    {
+        QVector<Line_type2> result;
+        Line_type2 temp;
+        float t = 0;
+        float delta= 1.00/numOfLine; //t的增量
+        for(int i = 0;i<numOfLine-1;i++)
+        {
+            temp.isouter = curve.isouter;
+            t = i*delta;
+            float para0 = (1-t)*(1-t)*(1-t);
+            float para1 = 3*(1-t)*(1-t)*t;
+            float para2 = 3*(1-t)*t*t;
+            float para3 = t*t*t;
+            temp.start.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+            temp.start.y= para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+            t = t +delta;
+            para0 = (1-t)*(1-t)*(1-t);
+            para1 = 3*(1-t)*(1-t)*t;
+            para2 = 3*(1-t)*t*t;
+            para3 = t*t*t;
+            temp.end.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
+            temp.end.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+            result.append(temp);
+        }
+        //最后一段加上
         temp.isouter = curve.isouter;
-        t = i*delta;
+        t = delta*(numOfLine-1);
         float para0 = (1-t)*(1-t)*(1-t);
         float para1 = 3*(1-t)*(1-t)*t;
         float para2 = 3*(1-t)*t*t;
         float para3 = t*t*t;
         temp.start.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
-        temp.start.y= para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
-        t = t +delta;
-        para0 = (1-t)*(1-t)*(1-t);
-        para1 = 3*(1-t)*(1-t)*t;
-        para2 = 3*(1-t)*t*t;
-        para3 = t*t*t;
-        temp.end.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
-        temp.end.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+        temp.start.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
+        temp.end.x = curve.point4.x();
+        temp.end.y = curve.point4.y();
         result.append(temp);
-    }
-    //最后一段加上
-    temp.isouter = curve.isouter;
-    t = delta*(numOfLine-1);
-    float para0 = (1-t)*(1-t)*(1-t);
-    float para1 = 3*(1-t)*(1-t)*t;
-    float para2 = 3*(1-t)*t*t;
-    float para3 = t*t*t;
-    temp.start.x= para0*curve.point1.x() + para1*curve.point2.x() + para2*curve.point3.x() + para3*curve.point4.x();
-    temp.start.y = para0*curve.point1.y() + para1*curve.point2.y() + para2*curve.point3.y() + para3*curve.point4.y();
-    temp.end.x = curve.point4.x();
-    temp.end.y = curve.point4.y();
-    result.append(temp);
 
-    return result;
+        return result;
+    }
+}
+
+/********************************************
+ *function:判断输入的Bezier曲线是否为直线
+ *input:
+ *output:true  是直线    false   不是直线
+ *adding:
+ *author: wong
+ *date: 2018/4/2
+ *******************************************/
+bool fillColors::bezierIsLine(bezier curve)
+{
+    QPointF  point1=curve.point1;
+    QPointF  point2=curve.point2;
+    QPointF  point3=curve.point3;
+    QPointF  point4=curve.point4;
+    if(point1.x()==point2.x()&&point2.x()==point3.x()&&point3.x()==point4.x())  //水平
+    {
+        return true;
+    }
+    else if(point1.y()==point2.y()&&point2.y()==point3.y()&&point3.y()==point4.y())  //竖着
+    {
+        return true;
+    }
+    else
+    {
+        float k1,k2,k3;
+        k1 = (point1.x()-point2.x())/(point1.y()-point2.y());
+        k2 = (point2.x()-point3.x())/(point2.y()-point3.y());
+        k3 = (point3.x()-point4.x())/(point3.y()-point4.y());
+        if(fabs(k1-k2)<0.01&&fabs(k2-k3)<0.01)  //斜率相同，一般情况下的四点共线
+            return true;
+        else
+            return false;
+    }
 }
 
 /********************************************
@@ -393,7 +446,7 @@ bool fillColors::outerIncludeInner(loop inner, loop outer)
 void fillColors::planAreaFill()
 {
     int size = all_colorWorkArea.size();  //颜色数目
-    for(int i = 0;i<size;i++)
+    for(int i =0;i<1;i++)   //  size=7
     {
         color_linesFillColor  one_color = computeAcolor(all_colorWorkArea.at(i));
         final_fill.append(one_color);
@@ -431,12 +484,12 @@ color_linesFillColor fillColors::computeAcolor(QVector<processArea> input)
  *author: wong
  *date: 2018/3/19
  *******************************************/
-processAreaFill fillColors::computeAarea(processArea input)
+processAreaFill fillColors:: computeAarea(processArea input)
 {
     processAreaFill result;
 
     /*建立单调链*/
-    QVector<MonotonicChain>  chains_outer = findMontonicChain(input.outer);  //找到外环的单调链
+    QVector<MonotonicChain>  chains_outer = findMontonicChain2(input.outer);  //找到外环的单调链
     QVector<QVector<MonotonicChain>> chains_inners =findMontonicChains(input.inners); //找到内环的单调链
 
     /*建立活性边表*/
@@ -448,19 +501,25 @@ processAreaFill fillColors::computeAarea(processArea input)
     int size = chains_outer.size();
     for(int i = 0;i<size;i++)
     {
-        if(i == 0)
+        if(Last_Node==NULL)
         {
-            Last_Node = buildYRelation(chains_outer.at(i),AET_Head);
+            Last_Node = buildYRelation(chains_outer.at(i),AET_Head);  //存在返回的指针一直为空的情况
+            continue;
+        }
+
+        point_Node *chain_Head = FirstChainNode(chains_outer.at(i),AET_Head);//当前单调链与活性边的第一个交点
+        if(chain_Head == NULL)
+        {
+            continue;
         }
         else
         {
-            point_Node *chain_Head = FirstChainNode(chains_outer.at(i),AET_Head);
             Last_Node->chainPcritical = chain_Head;  //建立跳转关系
-            point_Node *temp = buildYRelation(chains_outer.at(i),AET_Head);
+            point_Node *temp = buildYRelation(chains_outer.at(i),AET_Head);//当前交点与活性的最后一个交点，不会为空，因为能进入这个分支说明已经存在第一个交点了
             Last_Node = temp;
         }
-
     }
+
     //再用若干个内环
     int size1 = chains_inners.size();
     for(int i = 0;i<size1;i++)
@@ -470,13 +529,19 @@ processAreaFill fillColors::computeAarea(processArea input)
         int size2 = inner.size();
         for(int j = 0;j<size2;j++)
         {
-            if(j == 0)
+            if(Last_Node2 == NULL)
             {
                 Last_Node2= buildYRelation(inner.at(j),AET_Head);
+                continue;
+            }
+
+            point_Node *chain_Head = FirstChainNode(inner.at(j),AET_Head);
+            if(chain_Head==NULL)
+            {
+                continue;
             }
             else
             {
-                point_Node *chain_Head = FirstChainNode(inner.at(j),AET_Head);
                 Last_Node2->chainPcritical = chain_Head;//建立跳转关系
                point_Node *temp =  buildYRelation(inner.at(j),AET_Head);
                Last_Node2 = temp;
@@ -491,40 +556,51 @@ processAreaFill fillColors::computeAarea(processArea input)
         point_Node *temp = findGoodPoint(AET_Head);
         while(1)
         {
+            temp->process = true;
             float_Point point;
             point.x = temp->x;
             point.y = temp->y;
             section_line.append(point);
 
+
             if(temp->linked!=NULL&&temp->linked->process==false)     //路径横行   水平方向上存在可连接节点
             {
                 temp = temp->linked;
-                temp->linked->process = true ;  //标志位改变  变为已经加工过
                 continue;
             }
             else if(temp->chainNext!=NULL&&temp->chainNext->process==false)   //路径下行   单调链的垂直向下存在可连接节点
             {
                 temp = temp->chainNext;
-                temp->process = true;   //标志位改变  变为已经加工过
                 continue;
             }
             else if(temp->chainBefore!=NULL&&temp->chainBefore->process==false) //路径上行   单调链的垂直向上存在可连接节点
             {
                 temp = temp->chainBefore;
-                temp->process = true;
                 continue;
             }
+//            else if(temp->chainPcritical!=NULL&&temp->chainPcritical->process==false) //单调链的转接节点
+//            {
+//                temp = temp->chainPcritical;
+//                continue;
+//            }
             else
                 break;
         }
-        result.points.append(section_line);
+        int size = section_line.size();
+        if(2==size)
+        {
+            float distance = computeDistance(section_line.at(0),section_line.at(1));
+            if(distance<filter_distance)
+                continue;
+        }
+        result.points.append(section_line) ;
     }
-
     return result;
 }
 
+
 /********************************************
- *function:找出一个封闭环的
+ *function:找出一个封闭环的单调链
  *input:
  *output:
  *adding:根据是否存在极值点来判断是否是单调链
@@ -535,7 +611,7 @@ processAreaFill fillColors::computeAarea(processArea input)
 QVector<MonotonicChain> fillColors::findMontonicChain(loop input)
 {
      QVector<MonotonicChain>  result;
-     QVector<Line_type2>  lines;
+     QVector<Line_type2>  lines; //存储所有的非水平线
 
      //找出非水平线
      int size = input.lines.size();
@@ -545,7 +621,7 @@ QVector<MonotonicChain> fillColors::findMontonicChain(loop input)
          {
              continue;
          }
-         else  //是水平线
+         else  //非水平线
          {
              lines.append(input.lines.at(i));
          }
@@ -614,6 +690,182 @@ QVector<MonotonicChain> fillColors::findMontonicChain(loop input)
 }
 
 /********************************************
+ *function:找出一个封闭环中的单调链，不根据极值点判断，直接根据X值的变化趋势来判断
+ *input:
+ *output:
+ *adding:
+ *            根据X值变化趋势来确定单调链。当前后两条直线不连续，但单调性一致时，通过两直线首末点距离来判断是否合并到一条链上
+ *
+ *author: wong
+ *date: 2018/3/31
+ *******************************************/
+QVector<MonotonicChain> fillColors:: findMontonicChain2(loop input)
+{
+    QVector<MonotonicChain>  result;
+    QVector<Line_type2>  lines; //存储所有的非水平线
+
+    //找出非水平线
+    int size = input.lines.size();
+    for(int i =0;i<size;i++)
+    {
+        if(isHorizontalLine(input.lines.at(i)))
+        {
+            continue;
+        }
+        else  //非水平线
+        {
+            lines.append(input.lines.at(i));
+        }
+    }
+
+    bool  lastState,curState;
+    int size1 = lines.size(); //非水平线集
+    MonotonicChain chain;
+    Line_type2   last_line;
+    for(int i = 0;i<size1;i++)
+    {
+        if(i==0)
+        {
+            Line_type2 temp = lines.at(i);
+            if(temp.end.x>temp.start.x)
+            {
+                lastState = true;  //递增
+            }
+            else
+            {
+                lastState = false;//递减
+            }
+
+            if(lines.at(i).start.x>lines.at(i).end.x)
+            {
+                chain.maxX = lines.at(i).start.x;
+                chain.minX = lines.at(i).end.x;
+            }
+            else
+            {
+                chain.maxX = lines.at(i).end.x;
+                chain.minX = lines.at(i).start.x;
+            }
+            chain.lines.append(lines.at(i));
+            last_line = lines.at(i);
+        }
+        else
+        {
+            Line_type2 temp = lines.at(i);
+            if(temp.end.x>temp.start.x)
+            {
+                curState = true;  //递增
+            }
+            else
+            {
+                curState = false;//递减
+            }
+
+            if(curState==lastState) //单调性相同
+            {
+                if(fabs(last_line.end.x-temp.start.x)<0.01&&fabs(last_line.end.y-temp.start.y)<0.01)  //前后两条直线连续
+                {
+                    chain.lines.append(temp);
+                    if(temp.start.x<chain.minX)
+                    {
+                        chain.minX = temp.start.x;
+                    }
+                    if(temp.start.x>chain.maxX)
+                    {
+                        chain.maxX = temp.start.x;
+                    }
+                    if(temp.end.x<chain.minX)
+                    {
+                        chain.minX = temp.end.x;
+                    }
+                    if(temp.end.x>chain.maxX)
+                    {
+                        chain.maxX = temp.end.x;
+                    }
+                }
+                else
+                {
+                    float distance = computeDistance(last_line.end,temp.start);
+                    if(distance<=chain_judge)//不连续  但距离足够近  可以认为属于同一条单调链
+                    {
+                        chain.lines.append(lines.at(i));
+                        if(temp.start.x<chain.minX)
+                        {
+                            chain.minX = temp.start.x;
+                        }
+                        if(temp.start.x>chain.maxX)
+                        {
+                            chain.maxX = temp.start.x;
+                        }
+                        if(temp.end.x<chain.minX)
+                        {
+                            chain.minX = temp.end.x;
+                        }
+                        if(temp.end.x>chain.maxX)
+                        {
+                            chain.maxX = temp.end.x;
+                        }
+                    }
+                    else  //太远了  需划分到新的单调链
+                    {
+                         result.append(chain);
+                         chain.lines.clear();
+                         if(temp.start.x<temp.end.x)
+                         {
+                             chain.minX = temp.start.x;
+                             chain.maxX = temp.end.x;
+                         }
+                         else
+                         {
+                             chain.minX = temp.end.x;
+                             chain.maxX = temp.start.x;
+                         }
+                         chain.lines.append(temp);
+                    }
+                }
+            }
+            else  //单调性不同
+            {
+                result.append(chain);
+                chain.lines.clear();
+                if(temp.start.x<temp.end.x)
+                {
+                    chain.minX = temp.start.x;
+                    chain.maxX = temp.end.x;
+                }
+                else
+                {
+                    chain.minX = temp.end.x;
+                    chain.maxX = temp.start.x;
+                }
+                chain.lines.append(temp);
+            }
+            lastState = curState;
+            last_line = temp;
+        }
+
+    }
+    result.append(chain);
+    return result;
+}
+
+/********************************************
+ *function:计算两点间的距离
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/4/2
+ *******************************************/
+float fillColors::computeDistance(float_Point end, float_Point start)
+{
+    float delta_x = end.x - start.x;
+    float delta_y = end.y - start.y;
+    float distance = sqrt(delta_x*delta_x+delta_y*delta_y);
+    return distance;
+}
+
+/********************************************
  *function:
  *input:
  *output:
@@ -627,7 +879,7 @@ QVector<QVector<MonotonicChain>> fillColors::findMontonicChains(QVector<loop> in
     int size =input.size();
     for(int i = 0;i<size;i++)
     {
-        QVector<MonotonicChain> a_loop = findMontonicChain(input.at(i));
+        QVector<MonotonicChain> a_loop = findMontonicChain2(input.at(i));
         result.append(a_loop);
     }
     return result;
@@ -650,6 +902,56 @@ bool fillColors::isHorizontalLine(Line_type2 input)
 }
 
 /********************************************
+ *function:重节点位置判断
+ *input:
+ *output:0:不存在重节点
+ *           1:起点在左上，重节点为当前直线终点
+ *           2:起点在右上，重节点为当前直线起点
+ *           3:起点在右下，重节点为当前直线终点
+ *           4:起点在坐下，重节点为当前直线起点
+ *adding:
+ *author: wong
+ *date: 2018/4/3
+ *******************************************/
+int fillColors::heavyNode(Line_type2 pre, Line_type2 next)
+{
+    if(pre.start.x<next.end.x&&pre.start.y<next.end.y)  //左上
+    {
+        float k1 = (pre.end.y-pre.start.y)/(pre.end.x-pre.start.x);
+        float k2 = (next.end.y - next.start.y)/(next.end.x - next.start.x);  //方向相同
+        if(k1*k2>0)
+            return 1;
+    }
+
+    if(pre.start.x<next.end.x&&pre.start.y>next.end.y) //右上
+    {
+        float k1 = (pre.end.y-pre.start.y)/(pre.end.x-pre.start.x);
+        float k2 = (next.end.y - next.start.y)/(next.end.x - next.start.x);
+        if(k1*k2>0)
+            return 2;
+    }
+
+    if(pre.start.x>next.end.x&&pre.start.y>next.end.y)  //右下
+    {
+        float k1 = (pre.end.y-pre.start.y)/(pre.end.x-pre.start.x);
+        float k2 = (next.end.y - next.start.y)/(next.end.x - next.start.x);
+        if(k1*k2>0)
+            return 3;
+    }
+
+    if(pre.start.x>next.end.x&&pre.start.y<next.end.y)  //左下
+    {
+        float k1 = (pre.end.y-pre.start.y)/(pre.end.x-pre.start.x);
+        float k2 = (next.end.y - next.start.y)/(next.end.x - next.start.x);
+        if(k1*k2>0)
+            return 4;
+    }
+
+    return 0;
+
+}
+
+/********************************************
  *function:根据加工区域和行距来生成活性边表
  *input:
  *output:活性边表的头
@@ -668,7 +970,7 @@ activeEdgeTable_Node *fillColors::createAetChain(processArea input)
     int scan_num = int (range/Stitch); //扫描线个数
     for(int i = 1;i<=scan_num;i++)
     {
-        scan_x = scan_x + i*Stitch;
+        scan_x = scan_x + Stitch;
         if(i == 1)
         {
             activeEdgeTable_Node * row = computeScanAet(scan_x,input);
@@ -695,6 +997,7 @@ activeEdgeTable_Node *fillColors::createAetChain(processArea input)
  *output:
  *adding:需要考虑和奇异点的求交问题
  *           在过顶点时，对于非极值点只算一次，对于极值点算两次
+ *           对于水平线计算返回-1，跳过
  *author: wong
  *date: 2018/3/20
  *******************************************/
@@ -716,13 +1019,13 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
         {
             if(i==0)
             {
-                last_line = outer.lines.at(0);
-                float t = computeCrossPoint(scan_x,outer.lines.at(i));
+                last_line = outer.lines.at(i);
+                float t = computeCrossPoint(scan_x,outer.lines.at(i));  //如果是水平线，返回-1
                 if(t>=0&&t<=1)
                 {
                     float_Point  cross;
                     cross.x = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
-                    cross.y = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
+                    cross.y = (1-t)*outer.lines.at(i).start.y + t*outer.lines.at(i).end.y;
                     points.append(cross);
                 }
             }
@@ -737,7 +1040,7 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                         {
                             float_Point  cross;
                             cross.x = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
-                            cross.y = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
+                            cross.y = (1-t)*outer.lines.at(i).start.y + t*outer.lines.at(i).end.y;
                             points.append(cross);
                         }
                     }
@@ -745,8 +1048,43 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                     {
                         float_Point  cross;
                         cross.x = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
-                        cross.y = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
+                        cross.y = (1-t)*outer.lines.at(i).start.y + t*outer.lines.at(i).end.y;
                         points.append(cross);
+                    }
+                }
+                if(t==-1)  //水平线
+                {
+                    if(i+1<size)
+                    {
+                        int judge = heavyNode(last_line,outer.lines.at(i+1));
+                        if(1==judge)
+                        {
+                            float_Point  cross;
+                            cross.x = outer.lines.at(i).start.x;
+                            cross.y = outer.lines.at(i).start.y;
+                            points.append(cross);
+                        }
+                        if(2==judge)
+                        {
+                            float_Point  cross;
+                            cross.x = outer.lines.at(i).end.x;
+                            cross.y = outer.lines.at(i).end.y;
+                            points.append(cross);
+                        }
+                        if(3==judge)
+                        {
+                            float_Point  cross;
+                            cross.x = outer.lines.at(i).start.x;
+                            cross.y = outer.lines.at(i).start.y;
+                            points.append(cross);
+                        }
+                        if(4==judge)
+                        {
+                            float_Point  cross;
+                            cross.x = outer.lines.at(i).end.x;
+                            cross.y = outer.lines.at(i).end.y;
+                            points.append(cross);
+                        }
                     }
                 }
                 last_line = outer.lines.at(i);
@@ -772,7 +1110,7 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                     {
                         float_Point  cross;
                         cross.x = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
-                        cross.y = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
+                        cross.y = (1-t)*inner.lines.at(i).start.y + t*inner.lines.at(i).end.y;
                         points.append(cross);
                     }
                 }
@@ -787,7 +1125,7 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                             {
                                 float_Point  cross;
                                 cross.x = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
-                                cross.y = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
+                                cross.y = (1-t)*inner.lines.at(i).start.y + t*inner.lines.at(i).end.y;
                                 points.append(cross);
                             }
                         }
@@ -795,8 +1133,43 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                         {
                             float_Point  cross;
                             cross.x = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
-                            cross.y = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
+                            cross.y = (1-t)*inner.lines.at(i).start.y + t*inner.lines.at(i).end.y;
                             points.append(cross);
+                        }
+                    }
+                    else if(t==-1)  //水平线
+                    {
+                        if(i+1<size)
+                        {
+                            int judge = heavyNode(last_line,inner.lines.at(i+1));
+                            if(1==judge)
+                            {
+                                float_Point  cross;
+                                cross.x = inner.lines.at(i).end.x;
+                                cross.y = inner.lines.at(i).end.y;
+                                points.append(cross);
+                            }
+                            if(2==judge)
+                            {
+                                float_Point  cross;
+                                cross.x = inner.lines.at(i).start.x;
+                                cross.y = inner.lines.at(i).start.y;
+                                points.append(cross);
+                            }
+                            if(3==judge)
+                            {
+                                float_Point  cross;
+                                cross.x = inner.lines.at(i).end.x;
+                                cross.y = inner.lines.at(i).end.y;
+                                points.append(cross);
+                            }
+                            if(4==judge)
+                            {
+                                float_Point  cross;
+                                cross.x = inner.lines.at(i).start.x;
+                                cross.y = inner.lines.at(i).start.y;
+                                points.append(cross);
+                            }
                         }
                     }
                     last_line = inner.lines.at(i);
@@ -807,7 +1180,18 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
 
     //排序
     sortScanCrossPoint(points);
+
+    //建立水平联系
     int points_size = points.size();  //应该是偶数
+    if(points_size%2!=0)
+    {
+        qDebug()<<"odd number!!!!!!!!!"<<points.at(0).x;
+        for(int i = 0;i<points_size;i++)
+        {
+            qDebug()<<points.at(i).y;
+        }
+    }
+
     bool  linked = true;
     result->numOfPoints = points_size;
     point_Node * last_point = NULL;
@@ -859,7 +1243,7 @@ float fillColors::computeCrossPoint(float x, Line_type2 input)
 {
     float t;
     float minX,maxX;
-    if(input.start.x==input.end.x)  //平行线返回-1
+    if(input.start.x==input.end.x&&x==input.start.x)  //水平线返回-1
     {
         return -1;
     }
@@ -964,125 +1348,260 @@ point_Node *fillColors::createPointNode()
  *input:
  *output:
  *adding:
+ *           与找出最后一个节点一样，找第一个节点也要按单调性来分情况讨论
  *author: wong
  *date: 2018/3/24
  *******************************************/
 point_Node *fillColors::FirstChainNode(MonotonicChain chain, activeEdgeTable_Node *AET_Head)
 {
     point_Node *First_Node = NULL;
+    bool isIncrease;//判断单调性 true 递增  false 递减
     float  minX,maxX;
     int size = chain.lines.size();
-    for(int i = 0;i<size;i++)
+    for(int i = 0;i<size;i++)  //这边还是要循环的，因为并不是单调链的第一段或前几段就一定和活性边有交点，前几条线可能在两个活性边的中间
     {
         Line_type2 line = chain.lines.at(i);
         if(line.start.x<line.end.x)
         {
             minX = line.start.x;
             maxX = line.end.x;
+            isIncrease = true;
         }
         else
         {
             minX = line.end.x;
             maxX = line.start.x;
+            isIncrease = false;
         }
 
-        //扫描线快速定位到单调链的起始X位置
-        activeEdgeTable_Node *cur_Edge = AET_Head;
-        while(cur_Edge)
+        if(isIncrease)  //X单调递增时
         {
-            if(cur_Edge->X>minX)
+            //扫描线快速定位到单调链的起始X位置
+            activeEdgeTable_Node *cur_Edge = AET_Head;
+            while(cur_Edge)
             {
-                break;
-            }
-            else
-            {
-                cur_Edge  = cur_Edge->pNext;
-            }
-        }
-
-        while(cur_Edge->X<maxX)
-        {
-            float t = computeCrossPoint(cur_Edge->X,line);
-            if(t>=0&&t<=1)
-            {
-                float_Point  cross;
-                cross.x = (1-t)*line.start.x + t*line.end.x;
-                cross.y = (1-t)*line.start.x + t*line.end.x;
-
-                point_Node* Node = cur_Edge->pHead;
-                while(Node)
+                if(cur_Edge->X>minX)
                 {
-                    if(Node->y==cross.y)
-                    {
-                        if(Node->chainNext->y == cross.y)  //对重节点要特殊处理，找出真正的节点
-                        {
-                            //一共2*4=8种情况，通过向量和起终点的信息来判断
-                            if(line.start.x == cur_Edge->X)  //如果重合的是起点
-                            {
-                                if(line.end.x<line.start.x&&line.end.y<line.start.y)
-                                {
-                                    First_Node = Node;
-                                    return First_Node;
-                                }
-                                if(line.end.x<line.start.x&&line.end.y>line.start.y)
-                                {
-                                    First_Node = Node->chainNext;
-                                    return First_Node;
-                                }
-                                if(line.end.x>line.start.x&&line.end.y>line.start.y)
-                                {
-                                    First_Node = Node->chainNext;
-                                    return First_Node;
-                                }
-                                if(line.end.x<line.start.x&&line.end.y>line.start.y)
-                                {
-                                    First_Node = Node;
-                                    return First_Node;
-                                }
-                            }
-                            if(line.end.x == cur_Edge->X)  //如果重合的是线段终点
-                            {
-                                if(line.start.x<line.end.x&&line.start.y>line.end.y)
-                                {
-                                    First_Node = Node->chainNext;
-                                    return First_Node;
-                                }
-                                if(line.start.x<line.end.x&&line.start.y<line.end.y)
-                                {
-                                    First_Node = Node;
-                                    return First_Node;
-                                }
-                                if(line.start.x>line.end.x&&line.start.y<line.end.y)
-                                {
-                                    First_Node = Node;
-                                    return First_Node;
-                                }
-                                if(line.start.x>line.end.x&&line.start.y>line.end.y)
-                                {
-                                    First_Node = Node->chainNext;
-                                    return First_Node;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            First_Node = Node;
-                            return First_Node;
-                        }
-                    }
-                    Node = Node->chainNext;
+                    break;
+                }
+                else
+                {
+                    cur_Edge  = cur_Edge->pNext;
                 }
             }
-            cur_Edge  = cur_Edge->pNext;
+
+            if(cur_Edge == NULL)
+            {
+                continue;
+            }
+
+            while(cur_Edge->X<=maxX)
+            {
+                float t = computeCrossPoint(cur_Edge->X,line);
+                if(t>0&&t<=1)
+                {
+                    float_Point  cross;
+                    cross.x = (1-t)*line.start.x + t*line.end.x;
+                    cross.y = (1-t)*line.start.y + t*line.end.y;
+
+                    point_Node* Node = cur_Edge->pHead;
+                    while(Node)
+                    {
+                        if(fabs(Node->y-cross.y)<0.01)
+                        {
+                            if(Node->chainNext==NULL)
+                            {
+                                First_Node = Node;
+                                return First_Node;
+                            }
+                            else
+                            {
+                                if(Node->chainNext->y == cross.y)  //对重节点要特殊处理，找出真正的节点
+                                {
+                                    //一共2*4=8种情况，通过向量和起终点的信息来判断
+                                    if(line.start.x == cur_Edge->X)  //如果重合的是起点
+                                    {
+                                        if(line.end.x<line.start.x&&line.end.y<line.start.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                        if(line.end.x>line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                    }
+                                    if(line.end.x == cur_Edge->X)  //如果重合的是线段终点
+                                    {
+                                        if(line.start.x<line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                        if(line.start.x<line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    First_Node = Node;
+                                    return First_Node;
+                                }
+                            }
+                        }
+                        Node = Node->Next_Node;
+                    }
+                }
+                cur_Edge  = cur_Edge->pNext;
+                if(cur_Edge== NULL)
+                    break;
+            }
+        }
+        else   //X单调减
+        {
+            //扫描线快速定位到单调链的结束X位置
+            activeEdgeTable_Node *cur_Edge = AET_Head;
+            while(cur_Edge)
+            {
+                if(cur_Edge->X<maxX)
+                {
+                    cur_Edge  = cur_Edge->pNext;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if(cur_Edge == NULL)
+            {
+                continue;
+            }
+
+            while(cur_Edge->X>=minX)
+            {
+                float t = computeCrossPoint(cur_Edge->X,line);
+                if(t>0&&t<=1)
+                {
+                    float_Point  cross;
+                    cross.x = (1-t)*line.start.x + t*line.end.x;
+                    cross.y = (1-t)*line.start.y + t*line.end.y;
+
+                    point_Node* Node = cur_Edge->pHead;
+                    while(Node)
+                    {
+                        if(fabs(Node->y-cross.y)<0.01)
+                        {
+                            if(Node->chainNext==NULL)
+                            {
+                                First_Node = Node;
+                                return First_Node;
+                            }
+                            else
+                            {
+                                if(Node->chainNext->y == cross.y)  //对重节点要特殊处理，找出真正的节点
+                                {
+                                    //一共2*4=8种情况，通过向量和起终点的信息来判断
+                                    if(line.start.x == cur_Edge->X)  //如果重合的是起点
+                                    {
+                                        if(line.end.x<line.start.x&&line.end.y<line.start.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                        if(line.end.x>line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                    }
+                                    if(line.end.x == cur_Edge->X)  //如果重合的是线段终点
+                                    {
+                                        if(line.start.x<line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                        if(line.start.x<line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            First_Node = Node;
+                                            return First_Node;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            First_Node = Node->chainNext;
+                                            return First_Node;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    First_Node = Node;
+                                    return First_Node;
+                                }
+                            }
+
+                        }
+                        Node = Node->Next_Node;
+                    }
+                }
+                cur_Edge  = cur_Edge->pBefore;
+                if(cur_Edge== NULL)
+                    break;
+            }
         }
     }
+    return First_Node;
 }
 
 /********************************************
  *function:利用单调链建立活性边表Y方向上的联系
  *input:
- *output:返回当前单调链与扫描线的最后一个交点
+ *output:返回当前单调链与扫描线的最后一个节点的指针
  *adding:
+ *           如果单调链的长度较短就存在单调链正好落在两个活性边中间，不与任何活性边相交。
+ *           那么就存在返回值为NULL的情况，引起后续错误。
+ *
+ *           要修改，原来是按活性边从上倒下扫描，错误。必须结合单调链的方向来.....
  *author: wong
  *date: 2018/3/23
  *******************************************/
@@ -1091,6 +1610,7 @@ point_Node *fillColors::buildYRelation(MonotonicChain chain, activeEdgeTable_Nod
     point_Node *final_Node = NULL; //最后一个节点
     float  minX,maxX;
     bool  isFirst = true;  //标志位   是求出的第一个交点
+    bool  isIncrease; //true  递增    false   递减
     point_Node* Last_Node = NULL;
     int size = chain.lines.size();
     for(int i = 0;i<size;i++)
@@ -1100,116 +1620,259 @@ point_Node *fillColors::buildYRelation(MonotonicChain chain, activeEdgeTable_Nod
         {
             minX = line.start.x;
             maxX = line.end.x;
+            isIncrease = true;
         }
         else
         {
             minX = line.end.x;
             maxX = line.start.x;
+            isIncrease = false;
         }
 
-         //扫描线快速定位到单调链的起始X位置
-        activeEdgeTable_Node *cur_Edge = AET_Head;
-        while(cur_Edge)
+        if(isIncrease) //单调链是X递增的情况
         {
-            if(cur_Edge->X>minX)
+            //扫描线快速定位到单调链的起始X位置
+            activeEdgeTable_Node *cur_Edge = AET_Head;
+            while(cur_Edge)
             {
-                break;
-            }
-            else
-            {
-                cur_Edge  = cur_Edge->pNext;
-            }
-        }
-
-        while(cur_Edge->X<maxX)
-        {
-            float t = computeCrossPoint(cur_Edge->X,line);
-            if(t>=0&&t<=1)
-            {
-                float_Point  cross;
-                cross.x = (1-t)*line.start.x + t*line.end.x;
-                cross.y = (1-t)*line.start.x + t*line.end.x;
-
-                point_Node*  target_Node = NULL;
-                point_Node* Node = cur_Edge->pHead;
-                while(Node)
+                if(cur_Edge->X>minX)
                 {
-                    if(Node->y==cross.y)
-                    {
-                        if(Node->chainNext->y == cross.y)  //对重节点要特殊处理，找出真正的节点
-                        {
-                            //一共2*4=8种情况，通过向量和起终点的信息来判断
-                            if(line.start.x == cur_Edge->X)  //如果重合的是起点
-                            {
-                                if(line.end.x<line.start.x&&line.end.y<line.start.y)
-                                {
-                                    target_Node = Node;
-                                    break;
-                                }
-                                if(line.end.x<line.start.x&&line.end.y>line.start.y)
-                                {
-                                    target_Node = Node->chainNext;
-                                    break;
-                                }
-                                if(line.end.x>line.start.x&&line.end.y>line.start.y)
-                                {
-                                    target_Node = Node->chainNext;
-                                    break;
-                                }
-                                if(line.end.x<line.start.x&&line.end.y>line.start.y)
-                                {
-                                    target_Node = Node;
-                                    break;
-                                }
-                            }
-                            if(line.end.x == cur_Edge->X)  //如果重合的是线段终点
-                            {
-                                if(line.start.x<line.end.x&&line.start.y>line.end.y)
-                                {
-                                    target_Node = Node->chainNext;
-                                    break;
-                                }
-                                if(line.start.x<line.end.x&&line.start.y<line.end.y)
-                                {
-                                    target_Node = Node;
-                                    break;
-                                }
-                                if(line.start.x>line.end.x&&line.start.y<line.end.y)
-                                {
-                                    target_Node = Node;
-                                    break;
-                                }
-                                if(line.start.x>line.end.x&&line.start.y>line.end.y)
-                                {
-                                    target_Node = Node->chainNext;
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            target_Node = Node;
-                            break;
-                        }
-                    }
-                    Node = Node->chainNext;
-                }
-
-                if(isFirst)
-                {
-                    Last_Node = target_Node;
-                    final_Node = target_Node;//更新最后一个节点
-                    isFirst = false;
+                    break;
                 }
                 else
                 {
-                    Last_Node->chainNext = target_Node;  //双向链表  互指
-                    target_Node->chainBefore = Last_Node;
-                    Last_Node = target_Node;
-                    final_Node = target_Node;
+                    cur_Edge  = cur_Edge->pNext;
                 }
             }
-            cur_Edge  = cur_Edge->pNext;
+
+            if(cur_Edge== NULL)
+            {
+                continue;
+            }
+
+            while(cur_Edge->X<=maxX)
+            {
+                float t = computeCrossPoint(cur_Edge->X,line);
+                if(t>0&&t<=1)
+                {
+                    float_Point  cross;
+                    cross.x = (1-t)*line.start.x + t*line.end.x;
+                    cross.y = (1-t)*line.start.y + t*line.end.y;
+
+                    point_Node*  target_Node = NULL;
+                    point_Node* Node = cur_Edge->pHead;
+                    while(Node)
+                    {
+                        if(fabs(Node->y-cross.y)<0.01)
+                        {
+                            if(Node->Next_Node!= NULL)
+                            {
+                                if(Node->Next_Node->y == cross.y)  //对重节点要特殊处理，找出真正的节点
+                                {
+                                    //一共2*4=8种情况，通过向量和起终点的信息来判断
+                                    if(line.start.x == cur_Edge->X)  //如果重合的是起点
+                                    {
+                                        if(line.end.x<line.start.x&&line.end.y<line.start.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                        if(line.end.x>line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                    }
+                                    if(line.end.x == cur_Edge->X)  //如果重合的是线段终点
+                                    {
+                                        if(line.start.x<line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                        if(line.start.x<line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    target_Node = Node;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                target_Node = Node;
+                                break;
+                            }
+
+                        }
+                        Node = Node->Next_Node;
+                    }
+
+                    if(isFirst)
+                    {
+                        Last_Node = target_Node;
+                        final_Node = target_Node;//更新最后一个节点
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        Last_Node->chainNext = target_Node;  //双向链表  互指
+                        target_Node->chainBefore = Last_Node;
+                        Last_Node = target_Node;
+                        final_Node = target_Node;
+                    }
+                }
+                cur_Edge  = cur_Edge->pNext;
+                if(cur_Edge==NULL)
+                    break;
+            }
+        }
+        else  //单调链是X递减的情况
+        {
+            //扫描线快速定位到单调链的结束X位置
+            activeEdgeTable_Node *cur_Edge = AET_Head;
+            while(cur_Edge)
+            {
+                if(cur_Edge->X<maxX)
+                {
+                    cur_Edge  = cur_Edge->pNext;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if(cur_Edge== NULL)
+            {
+                continue;
+            }
+
+            while(cur_Edge->X>=minX)
+            {
+                float t = computeCrossPoint(cur_Edge->X,line);
+                if(t>0&&t<=1)
+                {
+                    float_Point  cross;
+                    cross.x = (1-t)*line.start.x + t*line.end.x;
+                    cross.y = (1-t)*line.start.y + t*line.end.y;
+
+                    point_Node*  target_Node = NULL;
+                    point_Node* Node = cur_Edge->pHead;
+                    while(Node)
+                    {
+                        if(fabs(Node->y-cross.y)<0.01)
+                        {
+                            if(Node->Next_Node!= NULL)
+                            {
+                                if(fabs(Node->Next_Node->y -cross.y)<0.01)  //对重节点要特殊处理，找出真正的节点
+                                {
+                                    //一共2*4=8种情况，通过向量和起终点的信息来判断
+                                    if(line.start.x == cur_Edge->X)  //如果重合的是起点
+                                    {
+                                        if(line.end.x<line.start.x&&line.end.y<line.start.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                        if(line.end.x>line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                        if(line.end.x<line.start.x&&line.end.y>line.start.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                    }
+                                    if(line.end.x == cur_Edge->X)  //如果重合的是线段终点
+                                    {
+                                        if(line.start.x<line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                        if(line.start.x<line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y<line.end.y)
+                                        {
+                                            target_Node = Node;
+                                            break;
+                                        }
+                                        if(line.start.x>line.end.x&&line.start.y>line.end.y)
+                                        {
+                                            target_Node = Node->Next_Node;
+                                            break;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    target_Node = Node;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                target_Node = Node;
+                                break;
+                            }
+                        }
+                        Node = Node->Next_Node;
+                    }
+
+                    if(isFirst)
+                    {
+                        Last_Node = target_Node;
+                        final_Node = target_Node;//更新最后一个节点
+                        isFirst = false;
+                    }
+                    else
+                    {
+                        Last_Node->chainBefore = target_Node;  //双向链表  互指
+                        target_Node->chainNext = Last_Node;
+                        Last_Node = target_Node;
+                        final_Node = target_Node;
+                    }
+                }
+                cur_Edge  = cur_Edge->pBefore;
+                if(cur_Edge==NULL)
+                    break;
+            }
         }
     }
     return final_Node;

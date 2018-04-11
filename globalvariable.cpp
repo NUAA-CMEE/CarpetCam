@@ -25,6 +25,7 @@ Pictures allPic;
 all_Splines total_content;
 
 QVector<color_linesFillColor>  final_fill; //所有颜色的填充结果
+QVector<color_loops> all_color;//存储所有颜色的封闭环
 
 
 int standRGB[256][3]={ {255,255,255},{255,255,204},{255,255,153},{255,255,102},{255,255,51},{255,255,0},
