@@ -11,7 +11,7 @@ Mat Image_cluster;//聚类后的图片
 Mat Image_edge;//边缘提取后的图片
 Mat Image_track;//轮廓追踪后的图片
 Mat Image_fill;//轮廓填充后的图片
-bool quantity_first = false;//true第一种量化方法    false第二种量化方法
+bool quantity_first = false;//true   216颜色量化方法    false 颜色合并量化方法
 float NBS_yuzhi = 3.2; //NBS阈值  2.7 k mean   density peak3
 int kernel_size = 3;
 int total_pic_number = 1; //聚类图像分解后的数量

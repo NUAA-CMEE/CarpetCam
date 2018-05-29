@@ -12,6 +12,8 @@
 #include<curvefit.h>
 #include<bezieroffset.h>
 #include<fillcolors.h>
+#include<anyanglefill.h>
+#include<yfillcolors.h>
 
 
 namespace Ui {
@@ -50,6 +52,7 @@ private:
     curveFit *spline;
     BezierOffset *offset;
     fillColors *fills;
+    YFillColors *yFill;
 };
 
 #endif // MAINWINDOW_H

@@ -130,7 +130,7 @@ void Quantification::Lab_quantity()
             QCoreApplication::processEvents(); //防止冻结，让进度条显示出来
              qDebug()<<color_num;
         }
-        Lab2RGB();//再将链表中的颜色转换到RGB空间，得到标准调色板；
+        Lab2RGB();//再将链表中的颜色转换到RGB空间，得到标准调色板RGB形式；
 
 
         QProgressDialog process2;
@@ -491,6 +491,7 @@ int Quantification::countSize()
  *input:
  *output:
  *adding:先从RGB转到XYZ空间，再从XYZ空间转到Lab
+ *           参考论文:基于视觉特性的一种自适应颜色量化算法;基于Lab颜色空间的彩色等差线骨架线的提取
  *author: wang
  *date: 2017/12/5
  *******************************************/

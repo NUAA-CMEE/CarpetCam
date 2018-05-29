@@ -255,6 +255,7 @@ struct  point_Node   //点（节点）
 struct activeEdgeTable_Node  //扫描线节点（活性边表节点AET）
 {
     float  X;  //扫描线的X坐标值
+    float Y; //扫描线的Y坐标值
     activeEdgeTable_Node  *pBefore; //前一个扫描线
     activeEdgeTable_Node  *pNext;    //后一个扫描线
     point_Node* pHead; //该扫描线上与封闭环相交的交点链表的链表头
@@ -265,6 +266,8 @@ struct MonotonicChain  //单调链结构体
 {
     float minX;
     float maxX;
+    float minY;
+    float maxY;
     QVector<Line_type2>  lines;//该单调链上的所有线段
 };
 

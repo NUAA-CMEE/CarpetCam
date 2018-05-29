@@ -29,6 +29,8 @@ public:
     Density *cluster_density_Head; //density peak list header
 
     int kernel_size;
+    int normal_K;  //密度归一化因子
+    int cluster_num;//聚类中心数目
 
 
 public:
@@ -42,7 +44,8 @@ public:
     void reduceNosiePoint2();
     void reduceNosiePoint3();
 
-    void ADPC_cluster();
+    void ADPC_cluster();  //密度峰聚类
+    void direct_cluster();
 
 private:
     void  create_NBS();
@@ -90,6 +93,7 @@ private:
     void releaseDensityNode(Density* Node);
     void findDensityCluster();
     void findDensityCluster2();
+    void findDensityCluster3();
     bool canBeACluser(Density*input,Density*Head);
     float NBScaculate(Density *input1,Density *input2);
     float NBScaculate(RGB_Lab input1,Density *input2);

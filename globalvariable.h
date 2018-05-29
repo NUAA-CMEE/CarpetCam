@@ -22,7 +22,7 @@ extern Mat Image_fill;//轮廓填充后的图片
 extern float offset_distance; //轮廓偏移距离
 
 extern int standRGB[256][3]; //标准色板
-extern bool quantity_first;//第一种量化方法
+extern bool quantity_first;//量化方法
 extern float NBS_yuzhi; //NBS阈值
 extern int kernel_size;//卷积核大小
 

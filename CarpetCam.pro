@@ -22,7 +22,9 @@ SOURCES += main.cpp\
     curvefit.cpp \
     showpic.cpp \
     bezieroffset.cpp \
-    fillcolors.cpp
+    fillcolors.cpp \
+    anyanglefill.cpp \
+    yfillcolors.cpp
 
 HEADERS  += mainwindow.h \
     globalvariable.h \
@@ -35,7 +37,9 @@ HEADERS  += mainwindow.h \
     showpic.h \
     entitytype.h \
     bezieroffset.h \
-    fillcolors.h
+    fillcolors.h \
+    anyanglefill.h \
+    yfillcolors.h
 
 FORMS    += mainwindow.ui \
     showpic.ui

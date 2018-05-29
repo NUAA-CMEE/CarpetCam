@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     track = NULL;
     spline = NULL;
     fills = NULL;
+    yFill = NULL;
 
 }
 
@@ -128,14 +129,6 @@ void MainWindow::on_quantification_btn_2_clicked()
         clusters->reGenerateRGB_LabPointer();
         clusters->K_Means_Cluster();
 
-//        clusters->filterProcess();
-//        clusters->reGenerateRGB_LabPointer();
-//        clusters->K_Means_Cluster();
-
-//        clusters->filterProcess();
-//        clusters->filterProcess();
-//        clusters->reGenerateRGB_LabPointer();
-//        clusters->K_Means_Cluster();
 
         clusters->reduceNosiePoint3();
         clusters->reduceNosiePoint3();
@@ -145,27 +138,11 @@ void MainWindow::on_quantification_btn_2_clicked()
         clusters->reduceNosiePoint3();
         clusters->reduceNosiePoint3();
         clusters->reduceNosiePoint3();
-
-//        clusters->filterProcess();
-//        clusters->reGenerateRGB_LabPointer();
-//        clusters->K_Means_Cluster();
-
-
-////        clusters->reduceNosiePoint();
-////        clusters->reduceNosiePoint();
-////        clusters->reduceNosiePoint();
-//        clusters->reGenerateRGB_LabPointer();
-//        clusters->K_Means_Cluster();
-
-//            clusters->reduceNosiePoint();
-//            clusters->reduceNosiePoint();
-////            clusters->reduceNosiePoint();
-////            clusters->reduceNosiePoint();
-////            clusters->reduceNosiePoint();
-////            clusters->reduceNosiePoint();
-//            clusters->reGenerateRGB_LabPointer();
-//            clusters->K_Means_Cluster();
     }
+
+//    clusters->direct_cluster();
+//    clusters->reduceNosiePoint3();
+
 
 //    clusters->ADPC_cluster();
 ////    clusters->reduceNosiePoint();
@@ -243,7 +220,10 @@ void MainWindow::on_quantification_btn_5_clicked()
  *******************************************/
 void MainWindow::on_quantification_btn_6_clicked()
 {
-    fills = new fillColors;
+//    fills = new fillColors;
+    yFill = new YFillColors;
+
+    
     showPic  test;
     test.exec();
 }

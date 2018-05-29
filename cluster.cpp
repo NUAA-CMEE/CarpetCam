@@ -10,6 +10,8 @@ Cluster::Cluster(QObject *parent) : QObject(parent)
     convergence_judge = 0.05;
     last_cluster_head = NULL;
     kernel_size = 5;  //13
+    normal_K = 100;
+    cluster_num = 7;
     sort_density_Head = NULL;
     cluster_density_Head = NULL;
 }
@@ -709,10 +711,10 @@ void Cluster::fill_cluster_Image()
 }
 
 /********************************************
- *function:
+ *function:根据量化后图片生成实际的调色板链表
  *input:
  *output:
- *adding:根据量化后图片生成实际的调色板链表，如果直接用量化中合并后的链表有问题，因为有的节点没有像素
+ *adding:如果直接用量化中合并后的链表有问题，因为有的节点没有像素
  *           他是先生成调色链表再将像素分配过去。而直接根据量化后的图像则不会
  *author: wang
  *date: 2017/12/15
@@ -1844,7 +1846,7 @@ void Cluster::create_density()
             density_temp->R = RGB_temp->Red;
             density_temp->G = RGB_temp->Green;
             density_temp->B = RGB_temp->Blue;
-            density_temp->den = RGB_temp->count;
+            density_temp->den = normal_K*RGB_temp->count/(image_width*image_height);
             density_temp->pre = NULL;
             density_temp->pNext = NULL;
             density_Head = density_temp;
@@ -1856,7 +1858,7 @@ void Cluster::create_density()
             density_temp->R = RGB_temp->Red;
             density_temp->G = RGB_temp->Green;
             density_temp->B = RGB_temp->Blue;
-            density_temp->den = RGB_temp->count;
+            density_temp->den = normal_K*RGB_temp->count/(image_width*image_height);
             density_temp->pre = density_last;
             density_temp->pNext = NULL;
             density_last->pNext = density_temp;
@@ -1874,9 +1876,9 @@ void Cluster::create_density()
             else
             {
                 nbs_ditance = caculate_NBS(RGB_temp,RGB_temp2);
-                if(nbs_ditance<NBS_yuzhi)
+                if(nbs_ditance<0.3)
                 {
-                    density_temp->den = density_temp->den + 0; //RGB_temp2->count
+                    density_temp->den = density_temp->den + normal_K*RGB_temp2->count/(image_width*image_height); //0  RGB_temp2->count
                 }
                 RGB_temp2 = RGB_temp2->Next;
             }
@@ -2072,8 +2074,9 @@ void Cluster::sortDensityList()
     while(temp)
     {
         count++;
-        qDebug()<<temp->gama;
-        qDebug()<<temp->R<<" "<<temp->G<<" "<<temp->B;
+        qDebug()<<temp->gama<<" "<<temp->den<<"  "<<temp->distance<<" "<<temp->R<<" "<<temp->G<<" "<<temp->B;
+//        qDebug()<<temp->gama;
+//        qDebug()<<temp->R<<" "<<temp->G<<" "<<temp->B;
         temp = temp->pNext;
     }
 
@@ -2180,6 +2183,43 @@ void Cluster::findDensityCluster2()
     }
 
 
+
+}
+
+/********************************************
+ *function:根据需要的颜色数目cluster_num来确定聚类中心数目
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/5/4
+ *******************************************/
+void Cluster::findDensityCluster3()
+{
+    cluster_density_Head = new Density;
+    cluster_density_Head->R = sort_density_Head->R;
+    cluster_density_Head->G = sort_density_Head->G;
+    cluster_density_Head->B = sort_density_Head->B;
+    cluster_density_Head->pre = NULL;
+    cluster_density_Head->pNext = NULL;
+
+    Density *temp1 = NULL,*temp2 = NULL,*last = NULL;
+    last = cluster_density_Head;
+    temp1= sort_density_Head->pNext;
+    for(int i = 0;i<cluster_num-1;i++)
+    {
+
+        temp2 = new Density;
+        temp2->R = temp1->R;
+        temp2->G = temp1->G;
+        temp2->B = temp1->B;
+        temp2->pre = last;
+        temp2->pNext = NULL;
+        last->pNext = temp2;
+        last = temp2;
+
+        temp1 = temp1->pNext;
+    }
 }
 
 /********************************************
@@ -2197,7 +2237,7 @@ bool Cluster::canBeACluser(Density *input, Density *Head)
     while(temp)
     {
         distance = NBScaculate(input,temp);
-        if(distance<NBS_yuzhi)
+        if(distance<3.2)
             return false;
         temp = temp->pNext;
     }
@@ -2258,6 +2298,7 @@ void Cluster::fill_Image()
 {
     float count = 0;
     Density *temp = cluster_density_Head;
+    qDebug()<<"聚类中心";
     while(temp)
     {
         count++;
@@ -2477,7 +2518,23 @@ void Cluster::ADPC_cluster()
     create_densityDistance();
     sortDensityList();
 
-    findDensityCluster2();
+//    findDensityCluster2();
+    findDensityCluster3();
     fill_Image();
 
+}
+
+/********************************************
+ *function:直接根据指定的颜色中心聚类
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/4/3
+ *******************************************/
+void Cluster::direct_cluster()
+{
+    create_clusterCenter3();//生成初始聚类中心链表
+    distributePoint2Cluster();//分配像素点到聚类中心  第一次
+    fill_cluster_Image();//生成聚类后的图像
 }
