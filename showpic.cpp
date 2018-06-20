@@ -349,7 +349,7 @@ void showPic::drawFillLines()
                         float_Point start = points.at(L-1);
                         float_Point end = points.at(L);
                         QPointF start2,end2;  //直线起点和终点
-                        float m = 1;  //放大倍数
+                        float m = 0.5;  //放大倍数
                         start2.setX(start.y*m);start2.setY(start.x*m);
                         end2.setX(end.y*m);end2.setY(end.x*m);
                         pen1->drawLine(start2,end2);

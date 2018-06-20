@@ -19,6 +19,8 @@ private:
     void extractColorImage(RGB_Lab *rgb);
     void edgeDetection();
 
+    float  caculateDistance(RGB_Lab *color, int R, int G,int B);
+    float  caculateDistance(Cluster_point *color, int R, int G,int B);
 
 };
 

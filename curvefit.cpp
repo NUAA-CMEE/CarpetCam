@@ -299,9 +299,10 @@ void curveFit::solution4()
         {
             temp2 = temp0.chain_lists.at(y);   //每个封闭环的像素点集合  含内外环信息
             Single_curve3 = caculateBezierCurve(temp2);  //求拟合的Bezier曲线
-              //清理型值点
-              //清理后添加的型值点
-           RGB_curve.curves.append(Single_curve3);
+            if(Single_curve3.size()>=5) //过滤噪声点  一些很小的封闭环
+            {
+                RGB_curve.curves.append(Single_curve3);
+            }
            Single_curve3.clear();
         }
         total_content.outlines4.append(RGB_curve);

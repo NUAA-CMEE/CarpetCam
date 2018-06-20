@@ -362,6 +362,7 @@ QVector<processArea> fillColors::groupProcessArea(color_loops input)
             area.outer = outer;
             if(inners.isEmpty())
             {
+                result.append(area);// new adding
                 continue;
             }
             else
@@ -370,6 +371,7 @@ QVector<processArea> fillColors::groupProcessArea(color_loops input)
             }
             result.append(area);
         }
+
         if(input.inners.isEmpty())
         {
             return result;
@@ -947,7 +949,7 @@ int fillColors::heavyNode(Line_type2 pre, Line_type2 next)
             return 4;
     }
 
-    return 0;
+    return 5;
 
 }
 
@@ -1032,11 +1034,25 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
             else
             {
                 float t = computeCrossPoint(scan_x,outer.lines.at(i));
-                if(t>=0&&t<=1)
+                if(scan_x==615&&t>=0&&t<=1)
+                {
+                    qDebug()<<"615";
+                }
+                if(t>=0&&t<1)    //[0,1]
                 {
                     if(t==0) //在多边形的顶点上
                     {
-                        if(existLimitValue(last_line,outer.lines.at(i)))//是极值点才添加到points容器中去
+                        int judge = existLimitValue(last_line,outer.lines.at(i));
+                        if(1==judge)//是极值点才添加到points容器中去
+                        {
+                            float_Point  cross;
+                            cross.x = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
+                            cross.y = (1-t)*outer.lines.at(i).start.y + t*outer.lines.at(i).end.y;
+                            points.append(cross);
+                            points.append(cross);
+                        }
+
+                        if(2==judge)//
                         {
                             float_Point  cross;
                             cross.x = (1-t)*outer.lines.at(i).start.x + t*outer.lines.at(i).end.x;
@@ -1060,27 +1076,38 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                         if(1==judge)
                         {
                             float_Point  cross;
-                            cross.x = outer.lines.at(i).start.x;
-                            cross.y = outer.lines.at(i).start.y;
+                            cross.x = outer.lines.at(i).end.x;  //start
+                            cross.y = outer.lines.at(i).end.y;  //start
                             points.append(cross);
                         }
                         if(2==judge)
                         {
                             float_Point  cross;
-                            cross.x = outer.lines.at(i).end.x;
-                            cross.y = outer.lines.at(i).end.y;
+                            cross.x = outer.lines.at(i).start.x; //end
+                            cross.y = outer.lines.at(i).start.y; //end
                             points.append(cross);
                         }
                         if(3==judge)
                         {
                             float_Point  cross;
-                            cross.x = outer.lines.at(i).start.x;
-                            cross.y = outer.lines.at(i).start.y;
+                            cross.x = outer.lines.at(i).end.x; //start
+                            cross.y = outer.lines.at(i).end.y; //start
                             points.append(cross);
                         }
                         if(4==judge)
                         {
                             float_Point  cross;
+                            cross.x = outer.lines.at(i).start.x;//end
+                            cross.y = outer.lines.at(i).start.y;//end
+                            points.append(cross);
+                        }
+                        if(5==judge)
+                        {
+                            float_Point  cross;
+                            cross.x = outer.lines.at(i).start.x;
+                            cross.y = outer.lines.at(i).start.y;
+                            points.append(cross);
+
                             cross.x = outer.lines.at(i).end.x;
                             cross.y = outer.lines.at(i).end.y;
                             points.append(cross);
@@ -1117,11 +1144,20 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                 else
                 {
                     float t = computeCrossPoint(scan_x,inner.lines.at(i));
-                    if(t>=0&&t<=1)
+                    if(t>=0&&t<1)  //[0,1]
                     {
                         if(t==0)
                         {
-                            if(existLimitValue(last_line,inner.lines.at(i)))//是极值点才添加到points容器中去
+                            int judge = existLimitValue(last_line,inner.lines.at(i));
+                            if(1==judge)//是极值点才添加到points容器中去
+                            {
+                                float_Point  cross;
+                                cross.x = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
+                                cross.y = (1-t)*inner.lines.at(i).start.y + t*inner.lines.at(i).end.y;
+                                points.append(cross);
+                                points.append(cross);
+                            }
+                            if(2==judge)//
                             {
                                 float_Point  cross;
                                 cross.x = (1-t)*inner.lines.at(i).start.x + t*inner.lines.at(i).end.x;
@@ -1145,29 +1181,40 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
                             if(1==judge)
                             {
                                 float_Point  cross;
-                                cross.x = inner.lines.at(i).end.x;
-                                cross.y = inner.lines.at(i).end.y;
+                                cross.x = inner.lines.at(i).start.x; //end
+                                cross.y = inner.lines.at(i).start.y; //end
                                 points.append(cross);
                             }
                             if(2==judge)
                             {
                                 float_Point  cross;
-                                cross.x = inner.lines.at(i).start.x;
-                                cross.y = inner.lines.at(i).start.y;
+                                cross.x = inner.lines.at(i).end.x;//start
+                                cross.y = inner.lines.at(i).end.y;//start
                                 points.append(cross);
                             }
                             if(3==judge)
                             {
                                 float_Point  cross;
-                                cross.x = inner.lines.at(i).end.x;
-                                cross.y = inner.lines.at(i).end.y;
+                                cross.x = inner.lines.at(i).start.x; //end
+                                cross.y = inner.lines.at(i).start.y; //end
                                 points.append(cross);
                             }
                             if(4==judge)
                             {
                                 float_Point  cross;
+                                cross.x = inner.lines.at(i).end.x;//start
+                                cross.y = inner.lines.at(i).end.y;//start
+                                points.append(cross);
+                            }
+                            if(5==judge)
+                            {
+                                float_Point  cross;
                                 cross.x = inner.lines.at(i).start.x;
                                 cross.y = inner.lines.at(i).start.y;
+                                points.append(cross);
+
+                                cross.x = outer.lines.at(i).end.x;
+                                cross.y = outer.lines.at(i).end.y;
                                 points.append(cross);
                             }
                         }
@@ -1185,6 +1232,11 @@ activeEdgeTable_Node *fillColors::computeScanAet(float scan_x, processArea input
     int points_size = points.size();  //应该是偶数
     if(points_size%2!=0)
     {
+        qDebug()<<"origin area";
+        for(int m=0;m<input.outer.lines.size();m++)
+        {
+            qDebug()<<input.outer.lines.at(m).start.y<<"  "<<input.outer.lines.at(m).start.x;
+        }
         qDebug()<<"odd number!!!!!!!!!"<<points.at(0).x;
         for(int i = 0;i<points_size;i++)
         {
@@ -1298,25 +1350,25 @@ bool fillColors::sortCrossPoints(const float_Point &v1, const float_Point &v2)
 /********************************************
  *function:判断相邻两条直线的交点是否是极值点
  *input:pre 前一条直线   next后一条直线
- *output: true 是极值点   false   非极值点
+ *output: 1 是极值点   2   非极值点   0  不处理
  *adding:
  *author: wong
  *date: 2018/3/22
  *******************************************/
-bool fillColors::existLimitValue(Line_type2 pre, Line_type2 next)
+int fillColors::existLimitValue(Line_type2 pre, Line_type2 next)
 {
     float  judge = (pre.start.x-pre.end.x)*(next.end.x-next.start.x);
     if(judge==0) //前一条直线是水平线   当前直线不会是水平线。如果当前线是水平线，在算交点时就会返回-1  也不会走到这一步了
     {
-        return  true;  //这种情况下，首端点也是要加入的
+        return  0;
     }
     else if(judge>0) //极值点
     {
-        return true;
+        return 1;
     }
     else  //非极值点
     {
-        return false;
+        return 2;
     }
 }
 
@@ -1733,19 +1785,23 @@ point_Node *fillColors::buildYRelation(MonotonicChain chain, activeEdgeTable_Nod
                         Node = Node->Next_Node;
                     }
 
-                    if(isFirst)
+                    if(target_Node!=NULL)
                     {
-                        Last_Node = target_Node;
-                        final_Node = target_Node;//更新最后一个节点
-                        isFirst = false;
+                        if(isFirst)
+                        {
+                            Last_Node = target_Node;
+                            final_Node = target_Node;//更新最后一个节点
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            Last_Node->chainNext = target_Node;  //双向链表  互指
+                            target_Node->chainBefore = Last_Node;
+                            Last_Node = target_Node;
+                            final_Node = target_Node;
+                        }
                     }
-                    else
-                    {
-                        Last_Node->chainNext = target_Node;  //双向链表  互指
-                        target_Node->chainBefore = Last_Node;
-                        Last_Node = target_Node;
-                        final_Node = target_Node;
-                    }
+
                 }
                 cur_Edge  = cur_Edge->pNext;
                 if(cur_Edge==NULL)
@@ -1856,19 +1912,23 @@ point_Node *fillColors::buildYRelation(MonotonicChain chain, activeEdgeTable_Nod
                         Node = Node->Next_Node;
                     }
 
-                    if(isFirst)
+                    if(target_Node!=NULL)
                     {
-                        Last_Node = target_Node;
-                        final_Node = target_Node;//更新最后一个节点
-                        isFirst = false;
+                        if(isFirst)
+                        {
+                            Last_Node = target_Node;
+                            final_Node = target_Node;//更新最后一个节点
+                            isFirst = false;
+                        }
+                        else
+                        {
+                            Last_Node->chainBefore = target_Node;  //双向链表  互指
+                            target_Node->chainNext = Last_Node;
+                            Last_Node = target_Node;
+                            final_Node = target_Node;
+                        }
                     }
-                    else
-                    {
-                        Last_Node->chainBefore = target_Node;  //双向链表  互指
-                        target_Node->chainNext = Last_Node;
-                        Last_Node = target_Node;
-                        final_Node = target_Node;
-                    }
+
                 }
                 cur_Edge  = cur_Edge->pBefore;
                 if(cur_Edge==NULL)

@@ -35,6 +35,8 @@ private:
     bool  isBorder(Code chain,int index);
     bool isBorder2(Code chain,int index);
 
+    float  caculateDistance(Cluster_point *color, int R, int G,int B);
+
 private:
     Pic_codes  codes_in_aPic;
     Mat Pic;
@@ -42,6 +44,7 @@ private:
     int lastCode;
     int right_slope,left_slope;
     bool jump;
+    pixel_type  backgroundColor;
 };
 
 #endif // TRACKER_H

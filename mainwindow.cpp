@@ -49,6 +49,30 @@ void MainWindow::on_open_triggered()
         qDebug()<<fileName;
 
         Image = imread(path.toLatin1().data()); //根据路径读取图片
+        if(Image.rows>600||Image.cols>1000)
+        {
+            if(Image.cols>=Image.rows)
+            {
+                float K = (float)Image.rows/(float)Image.cols;
+                int col = 1000;
+                int row = int(1000*K);
+                Size RC = Size(col,row);
+                Mat dst(RC,Image.type());
+                cv::resize(Image,dst,RC);
+                Image = dst.clone();
+            }
+            if(Image.cols<Image.rows)
+            {
+                float K = (float)Image.cols/(float)Image.rows;
+                int row = 600;
+                int col = int(600*K);
+                Size RC = Size(col,row);
+                Mat dst(RC,Image.type());
+                cv::resize(Image,dst,RC);
+                Image = dst.clone();
+            }
+        }
+
         Image_quantity = Image.clone();
         Image_cluster = Image.clone();
         Image_edge = Image.clone();
@@ -176,6 +200,14 @@ void MainWindow::on_quantification_btn_2_clicked()
     clusters = NULL;
 }
 
+/********************************************
+ *function:轮廓提取按钮槽函数
+ *input:
+ *output:
+ *adding:
+ *author: wang
+ *date: 2017/12/6
+ *******************************************/
 void MainWindow::on_quantification_btn_3_clicked()
 {
     split = new Spliter;
@@ -220,9 +252,8 @@ void MainWindow::on_quantification_btn_5_clicked()
  *******************************************/
 void MainWindow::on_quantification_btn_6_clicked()
 {
-//    fills = new fillColors;
-    yFill = new YFillColors;
-
+    fills = new fillColors;
+//    yFill = new YFillColors;
     
     showPic  test;
     test.exec();

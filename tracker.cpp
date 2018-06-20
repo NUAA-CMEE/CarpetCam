@@ -6,7 +6,7 @@ Tracker::Tracker(QObject *parent) : QObject(parent)
     isEnd = false;
     allPic.number = 0;
     allPic.codes.clear();
-    total_pic_number = 7;
+//    total_pic_number = 7;
     right_slope = 0;
     left_slope = 0;
     jump = false;
@@ -30,6 +30,23 @@ void Tracker::getAllPicCode()
         codes_in_aPic.R = temp->Red;
         codes_in_aPic.G = temp->Green;
         codes_in_aPic.B = temp->Blue;
+
+        float whiteDistance = caculateDistance(temp,255,255,255);
+        float blackDistance = caculateDistance(temp,0,0,0);
+        if(whiteDistance>blackDistance)
+        {
+            backgroundColor.R = 255 ;
+            backgroundColor.G = 255 ;
+            backgroundColor.B = 255 ;
+        }
+        else
+        {
+            backgroundColor.R = 0 ;
+            backgroundColor.G = 0 ;
+            backgroundColor.B = 0 ;
+        }
+
+
         QString fileRead = filePath +"/"+fileName + QString("%1").arg(i) + ".bmp";
         getOnePicCode(fileRead);
         allPic.number++;
@@ -87,7 +104,7 @@ void Tracker::getOnePicCode(QString path)
 }
 
 /********************************************
- *function:get a chain code from a
+ *function:get a chain code from a picture
  *input:
  *output:
  *adding:cv::Mat的坐标系是反的,要么用 (n,m) 要么用pointm,n)
@@ -100,7 +117,7 @@ void Tracker::getSingleChainCode()
     {
         for(int n = 0;n<(Pic.cols);n++)
         {
-            if(Pic.at<Vec3b>(m,n)[0]==0&&Pic.at<Vec3b>(m,n)[1]==0&&Pic.at<Vec3b>(m,n)[2]==0)
+            if(Pic.at<Vec3b>(m,n)[0]==backgroundColor.R&&Pic.at<Vec3b>(m,n)[1]==backgroundColor.G&&Pic.at<Vec3b>(m,n)[2]==backgroundColor.B)
             {
                 if(m == (Pic.rows-1)&&n == (Pic.rows-1))
                     isEnd = true;
@@ -165,48 +182,47 @@ int Tracker::traceChain(int row, int col)
             for(int i = 0;i<size;i++)
             {
                 temp=result.point.at(i);
-                Pic.at<Vec3b>(temp.i,temp.j)[0] = 0;
-                Pic.at<Vec3b>(temp.i,temp.j)[1] = 0;
-                Pic.at<Vec3b>(temp.i,temp.j)[2] = 0;
+                Pic.at<Vec3b>(temp.i,temp.j)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i,temp.j)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i,temp.j)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i-1,temp.j-1)[0] = 0;
-                Pic.at<Vec3b>(temp.i-1,temp.j-1)[1] = 0;
-                Pic.at<Vec3b>(temp.i-1,temp.j-1)[2] = 0;
+                Pic.at<Vec3b>(temp.i-1,temp.j-1)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i-1,temp.j-1)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i-1,temp.j-1)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i-1,temp.j)[0] = 0;
-                Pic.at<Vec3b>(temp.i-1,temp.j)[1] = 0;
-                Pic.at<Vec3b>(temp.i-1,temp.j)[2] = 0;
+                Pic.at<Vec3b>(temp.i-1,temp.j)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i-1,temp.j)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i-1,temp.j)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i-1,temp.j+1)[0] = 0;
-                Pic.at<Vec3b>(temp.i-1,temp.j+1)[1] = 0;
-                Pic.at<Vec3b>(temp.i-1,temp.j+1)[2] = 0;
+                Pic.at<Vec3b>(temp.i-1,temp.j+1)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i-1,temp.j+1)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i-1,temp.j+1)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i,temp.j-1)[0] = 0;
-                Pic.at<Vec3b>(temp.i,temp.j-1)[1] = 0;
-                Pic.at<Vec3b>(temp.i,temp.j-1)[2] = 0;
+                Pic.at<Vec3b>(temp.i,temp.j-1)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i,temp.j-1)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i,temp.j-1)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i,temp.j+1)[0] = 0;
-                Pic.at<Vec3b>(temp.i,temp.j+1)[1] = 0;
-                Pic.at<Vec3b>(temp.i,temp.j+1)[2] = 0;
+                Pic.at<Vec3b>(temp.i,temp.j+1)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i,temp.j+1)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i,temp.j+1)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i+1,temp.j-1)[0] = 0;
-                Pic.at<Vec3b>(temp.i+1,temp.j-1)[1] = 0;
-                Pic.at<Vec3b>(temp.i+1,temp.j-1)[2] = 0;
+                Pic.at<Vec3b>(temp.i+1,temp.j-1)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i+1,temp.j-1)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i+1,temp.j-1)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i+1,temp.j)[0] = 0;
-                Pic.at<Vec3b>(temp.i+1,temp.j)[1] = 0;
-                Pic.at<Vec3b>(temp.i+1,temp.j)[2] = 0;
+                Pic.at<Vec3b>(temp.i+1,temp.j)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i+1,temp.j)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i+1,temp.j)[2] = backgroundColor.B;
 
-                Pic.at<Vec3b>(temp.i+1,temp.j+1)[0] = 0;
-                Pic.at<Vec3b>(temp.i+1,temp.j+1)[1] = 0;
-                Pic.at<Vec3b>(temp.i+1,temp.j+1)[2] = 0;
+                Pic.at<Vec3b>(temp.i+1,temp.j+1)[0] = backgroundColor.R;
+                Pic.at<Vec3b>(temp.i+1,temp.j+1)[1] = backgroundColor.G;
+                Pic.at<Vec3b>(temp.i+1,temp.j+1)[2] = backgroundColor.B;
             }
             return -1;
         }
         result.point.append(cur);
         intoCode = lastCode;
     }while(!(cur.i==row&&cur.j==col));
-    codes_in_aPic.chain_lists.append(result);
 
     //clear the points have been searched
     Image_IJ temp;
@@ -214,41 +230,50 @@ int Tracker::traceChain(int row, int col)
     for(int i = 0;i<size;i++)
     {
         temp=result.point.at(i);
-        Pic.at<Vec3b>(temp.i,temp.j)[0] = 0;
-        Pic.at<Vec3b>(temp.i,temp.j)[1] = 0;
-        Pic.at<Vec3b>(temp.i,temp.j)[2] = 0;
+        Pic.at<Vec3b>(temp.i,temp.j)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i,temp.j)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i,temp.j)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i-1,temp.j-1)[0] = 0;
-        Pic.at<Vec3b>(temp.i-1,temp.j-1)[1] = 0;
-        Pic.at<Vec3b>(temp.i-1,temp.j-1)[2] = 0;
+        Pic.at<Vec3b>(temp.i-1,temp.j-1)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i-1,temp.j-1)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i-1,temp.j-1)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i-1,temp.j)[0] = 0;
-        Pic.at<Vec3b>(temp.i-1,temp.j)[1] = 0;
-        Pic.at<Vec3b>(temp.i-1,temp.j)[2] = 0;
+        Pic.at<Vec3b>(temp.i-1,temp.j)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i-1,temp.j)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i-1,temp.j)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i-1,temp.j+1)[0] = 0;
-        Pic.at<Vec3b>(temp.i-1,temp.j+1)[1] = 0;
-        Pic.at<Vec3b>(temp.i-1,temp.j+1)[2] = 0;
+        Pic.at<Vec3b>(temp.i-1,temp.j+1)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i-1,temp.j+1)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i-1,temp.j+1)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i,temp.j-1)[0] = 0;
-        Pic.at<Vec3b>(temp.i,temp.j-1)[1] = 0;
-        Pic.at<Vec3b>(temp.i,temp.j-1)[2] = 0;
+        Pic.at<Vec3b>(temp.i,temp.j-1)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i,temp.j-1)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i,temp.j-1)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i,temp.j+1)[0] = 0;
-        Pic.at<Vec3b>(temp.i,temp.j+1)[1] = 0;
-        Pic.at<Vec3b>(temp.i,temp.j+1)[2] = 0;
+        Pic.at<Vec3b>(temp.i,temp.j+1)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i,temp.j+1)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i,temp.j+1)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i+1,temp.j-1)[0] = 0;
-        Pic.at<Vec3b>(temp.i+1,temp.j-1)[1] = 0;
-        Pic.at<Vec3b>(temp.i+1,temp.j-1)[2] = 0;
+        Pic.at<Vec3b>(temp.i+1,temp.j-1)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i+1,temp.j-1)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i+1,temp.j-1)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i+1,temp.j)[0] = 0;
-        Pic.at<Vec3b>(temp.i+1,temp.j)[1] = 0;
-        Pic.at<Vec3b>(temp.i+1,temp.j)[2] = 0;
+        Pic.at<Vec3b>(temp.i+1,temp.j)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i+1,temp.j)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i+1,temp.j)[2] = backgroundColor.B;
 
-        Pic.at<Vec3b>(temp.i+1,temp.j+1)[0] = 0;
-        Pic.at<Vec3b>(temp.i+1,temp.j+1)[1] = 0;
-        Pic.at<Vec3b>(temp.i+1,temp.j+1)[2] = 0;
+        Pic.at<Vec3b>(temp.i+1,temp.j+1)[0] = backgroundColor.R;
+        Pic.at<Vec3b>(temp.i+1,temp.j+1)[1] = backgroundColor.G;
+        Pic.at<Vec3b>(temp.i+1,temp.j+1)[2] = backgroundColor.B;
+    }
+
+    if(result.point.size()>=4)  //防止单个的点作为封闭环 加入数据。过滤作用
+    {
+        codes_in_aPic.chain_lists.append(result);
+    }
+    else
+    {
+        return -1;
     }
 }
 
@@ -318,7 +343,7 @@ Image_IJ Tracker::nextPoint(Image_IJ input, int codeValue)
     {
         codeValue = loopSub(codeValue,1);
         get = surroundPoint(input,codeValue);
-        if(Pic.at<Vec3b>(get.i,get.j)[0]==0&&Pic.at<Vec3b>(get.i,get.j)[1]==0&&Pic.at<Vec3b>(get.i,get.j)[2]==0)
+        if(Pic.at<Vec3b>(get.i,get.j)[0]==backgroundColor.R&&Pic.at<Vec3b>(get.i,get.j)[1]==backgroundColor.G&&Pic.at<Vec3b>(get.i,get.j)[2]==backgroundColor.B)
         {
             continue;
         }
@@ -550,15 +575,20 @@ void Tracker::judgeOuter()
             {
                 temp2->outer = false;  //内环
             }
-            //再次判断，只根据深度层数存在着误判的可能
-            if(isEvenNumber(corss_number))  //水平向左的射线与其他封闭环的角点个数为偶数
+
+            //包围盒在判断内环时存在缺陷，需要再次判断
+            if(temp2->outer==false)
             {
-                temp2->outer = true;
+                if(isEvenNumber(corss_number))  //水平向左的射线与其他封闭环的交点个数为偶数
+                {
+                    temp2->outer = true;
+                }
+                else
+                {
+                    temp2->outer = false;
+                }
             }
-            else
-            {
-                temp2->outer = false;
-            }
+
         }
     }
 }
@@ -804,4 +834,21 @@ bool Tracker::isBorder2(Code chain, int index)
         }
         return false;
     }
+}
+
+/********************************************
+ *function:
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/5/28
+ *******************************************/
+float Tracker::caculateDistance(Cluster_point *color, int R, int G, int B)
+{
+    float delta_R = color->Red - R;
+    float delta_G = color->Green - G;
+    float delta_B = color->Blue - B;
+    float distance = sqrt(delta_R*delta_R+delta_G*delta_G+delta_B*delta_B);
+    return distance;
 }

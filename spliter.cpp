@@ -21,7 +21,7 @@ Spliter::Spliter()
 }
 
 /********************************************
- *function:
+ *function:根据要分离出的颜色生成相应的背景图片
  *input:
  *output:
  *adding:
@@ -32,15 +32,36 @@ void Spliter::extractColorImage(RGB_Lab *rgb)
 {
     count ++;
     Mat output(Image_quantity.rows+2*sideWidth,Image_quantity.cols+2*sideWidth,Image_quantity.type());
-    for(int i = 0;i<output.rows;i++)
+    float whiteDistance = caculateDistance(rgb,255,255,255);
+    float blackDistance = caculateDistance(rgb,0,0,0);
+    if(whiteDistance>blackDistance)
     {
-        for(int j = 0;j<output.cols;j++)
+        for(int i = 0;i<output.rows;i++)
         {
-            output.at<Vec3b>(i,j)[0] = 0; //0
-            output.at<Vec3b>(i,j)[1] = 0; //0
-            output.at<Vec3b>(i,j)[2] = 0; //0
+            //在生成背景图片时，根据聚类的颜色来生成色差较大的背景颜色
+            for(int j = 0;j<output.cols;j++)
+            {
+                output.at<Vec3b>(i,j)[0] = 255; //
+                output.at<Vec3b>(i,j)[1] = 255; //
+                output.at<Vec3b>(i,j)[2] = 255; //
+            }
         }
     }
+    else
+    {
+        for(int i = 0;i<output.rows;i++)
+        {
+            //在生成背景图片时，根据聚类的颜色来生成色差较大的背景颜色
+            for(int j = 0;j<output.cols;j++)
+            {
+                output.at<Vec3b>(i,j)[0] = 0; //0
+                output.at<Vec3b>(i,j)[1] = 0; //0
+                output.at<Vec3b>(i,j)[2] = 0; //0
+            }
+        }
+    }
+
+
     //generate the black background color image
     for(int i = sideWidth;i<(Image_quantity.rows+sideWidth);i++)
     {
@@ -87,24 +108,52 @@ void Spliter::edgeDetection()
         Canny(gray,gray,3,9,5);//  40  50 3
         cvtColor(gray,pureColor,CV_GRAY2BGR);
 
-        for(int m = 0;m<(output.rows);m++)
+        float whiteDistance = caculateDistance(temp,255,255,255);
+        float blackDistance = caculateDistance(temp,0,0,0);
+        if(whiteDistance>blackDistance)
         {
-            for(int n = 0;n<(output.cols);n++)
+            for(int m = 0;m<(output.rows);m++)
             {
-                if(gray.at<uchar>(m,n)==255)
+                for(int n = 0;n<(output.cols);n++)
                 {
-                    output.at<Vec3b>(m,n)[0] = temp->Blue;
-                    output.at<Vec3b>(m,n)[1] = temp->Green;
-                    output.at<Vec3b>(m,n)[2] = temp->Red;
-                }
-                else
-                {
-                    output.at<Vec3b>(m,n)[0] = 0;//0
-                    output.at<Vec3b>(m,n)[1] = 0;//0
-                    output.at<Vec3b>(m,n)[2] = 0;//0
+                    if(gray.at<uchar>(m,n)==255)
+                    {
+                        output.at<Vec3b>(m,n)[0] = temp->Blue;
+                        output.at<Vec3b>(m,n)[1] = temp->Green;
+                        output.at<Vec3b>(m,n)[2] = temp->Red;
+                    }
+                    else
+                    {
+                        output.at<Vec3b>(m,n)[0] = 255;//0
+                        output.at<Vec3b>(m,n)[1] = 255;//0
+                        output.at<Vec3b>(m,n)[2] = 255;//0
+                    }
                 }
             }
         }
+        else
+        {
+            for(int m = 0;m<(output.rows);m++)
+            {
+                for(int n = 0;n<(output.cols);n++)
+                {
+                    if(gray.at<uchar>(m,n)==255)
+                    {
+                        output.at<Vec3b>(m,n)[0] = temp->Blue;
+                        output.at<Vec3b>(m,n)[1] = temp->Green;
+                        output.at<Vec3b>(m,n)[2] = temp->Red;
+                    }
+                    else
+                    {
+                        output.at<Vec3b>(m,n)[0] = 0;//0
+                        output.at<Vec3b>(m,n)[1] = 0;//0
+                        output.at<Vec3b>(m,n)[2] = 0;//0
+                    }
+                }
+            }
+        }
+
+
 
         imwrite(fileSave.toLatin1().data(),output);
 
@@ -113,4 +162,38 @@ void Spliter::edgeDetection()
 
         temp = temp->Next;
     }
+}
+
+/********************************************
+ *function:计算颜色距离
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/5/28
+ *******************************************/
+float Spliter::caculateDistance(RGB_Lab *color, int R, int G, int B)
+{
+    float delta_R = color->Red - R;
+    float delta_G = color->Green - G;
+    float delta_B = color->Blue - B;
+    float distance = sqrt(delta_R*delta_R+delta_G*delta_G+delta_B*delta_B);
+    return distance;
+}
+
+/********************************************
+ *function:
+ *input:
+ *output:
+ *adding:
+ *author: wong
+ *date: 2018/5/28
+ *******************************************/
+float Spliter::caculateDistance(Cluster_point *color, int R, int G, int B)
+{
+    float delta_R = color->Red - R;
+    float delta_G = color->Green - G;
+    float delta_B = color->Blue - B;
+    float distance = sqrt(delta_R*delta_R+delta_G*delta_G+delta_B*delta_B);
+    return distance;
 }

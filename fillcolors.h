@@ -48,7 +48,7 @@ private:
     float  computeCrossPoint(float x,Line_type2 input);
     void sortScanCrossPoint(QVector<float_Point> &points);
     static bool sortCrossPoints(const float_Point &v1,const float_Point &v2);
-    bool existLimitValue(Line_type2  pre,Line_type2  next);
+    int existLimitValue(Line_type2  pre,Line_type2  next);
     point_Node *createPointNode();
     point_Node* FirstChainNode(MonotonicChain chain,activeEdgeTable_Node *AET_Head);
     point_Node* buildYRelation(MonotonicChain chain,activeEdgeTable_Node *AET_Head);
